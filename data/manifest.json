@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-08-31T15:14:19.921811+02:00",
+  "rooms": [
+    {
+      "room_key": "banheiro_quente",
+      "label": "Banheiro - Quente",
+      "temperature": "quente",
+      "has_data": true,
+      "last_reading": 134.641,
+      "last_reading_at": "2026-08-30 22:25:10",
+      "last_sync": "2026-08-31T15:14:19.921811+02:00",
+      "available_months": [
+        "2026-08"
+      ]
+    },
+    {
+      "room_key": "banheiro_fria",
+      "label": "Banheiro - Fria",
+      "temperature": "fria",
+      "has_data": false,
+      "last_reading": null,
+      "last_reading_at": null,
+      "last_sync": "2026-08-31T15:14:19.921811+02:00",
+      "available_months": []
+    },
+    {
+      "room_key": "cozinha_quente",
+      "label": "Cozinha - Quente",
+      "temperature": "quente",
+      "has_data": false,
+      "last_reading": null,
+      "last_reading_at": null,
+      "last_sync": "2026-08-31T15:14:19.921811+02:00",
+      "available_months": []
+    },
+    {
+      "room_key": "cozinha_fria",
+      "label": "Cozinha - Fria",
+      "temperature": "fria",
+      "has_data": false,
+      "last_reading": null,
+      "last_reading_at": null,
+      "last_sync": "2026-08-31T15:14:19.921811+02:00",
+      "available_months": []
+    },
+    {
+      "room_key": "lavanderia_fria",
+      "label": "Lavanderia - Fria",
+      "temperature": "fria",
+      "has_data": false,
+      "last_reading": null,
+      "last_reading_at": null,
+      "last_sync": "2026-08-31T15:14:19.921811+02:00",
+      "available_months": []
+    }
+  ]
+}

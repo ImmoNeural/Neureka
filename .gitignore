@@ -1,0 +1,14 @@
+# The run log is local operational output, not site content. Committing it would
+# make every single run produce a diff, defeating the "skip empty commit" logic.
+sync_log.txt
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Editor / OS noise
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.tmp

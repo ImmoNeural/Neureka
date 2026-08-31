@@ -1,0 +1,11 @@
+[
+  {
+    "date": "2026-08-30",
+    "session_count": 1,
+    "banho_count": 1,
+    "descarga_count": 0,
+    "total_liters": 178,
+    "avg_liters_per_banho": 178.0,
+    "avg_liters_per_descarga": 0.0
+  }
+]

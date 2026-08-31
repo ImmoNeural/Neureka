@@ -78,16 +78,25 @@ ROOM_LABELS: dict[str, str] = {
 # Tuning constants
 # ---------------------------------------------------------------------------
 
-# A reading that exceeds the last known-good reading by more than this many cubic
-# metres is treated as an OCR misread and rejected. 5.0 m3 (= 5000 L) between two
-# ~5-10 minute photos is far beyond any domestic fixture's flow rate.
-#
-# NOTE (known limitation, see README): 5.0 is deliberately permissive and will NOT
-# catch a small OCR spike such as 134.463 -> 134.641 (0.178 m3 = 178 L). Because the
-# cleaner never lowers "last known good", one accepted spike then rejects every
-# subsequent true reading below it. If spikes of this size are common in practice,
-# lower this to ~0.5 -- 500 L in ten minutes is already implausible for one fixture.
+# Absolute ceiling on how far a reading may exceed the last known-good one, in cubic
+# metres. This is the backstop that bounds consumption across a long capture outage,
+# where the rate guard below becomes permissive (a 14-hour gap would otherwise allow
+# a jump of thousands of litres).
 MAX_PLAUSIBLE_JUMP_M3 = 5.0
+
+# Ceiling on implied flow rate between two consecutive readings, in litres/minute.
+#
+# This is the guard that actually catches OCR digit misreads. On the real bathroom
+# data the single bad row (134.463 -> 134.641, +178 L in 3.3 min) implies 54 L/min,
+# while every genuine draw stays at or below 17 L/min -- a domestic shower runs
+# 8-12 L/min and a tap 6-10 L/min. 25 L/min sits clearly above real usage and well
+# below misread territory.
+#
+# MAX_PLAUSIBLE_JUMP_M3 alone cannot do this job: at 5.0 m3 it rejects nothing on
+# real data, so the spike is accepted, and because a rejection never lowers "last
+# known good", every later true reading is then discarded as backwards. That single
+# spike cost 13 of 18 rows and reported 134.641 as current instead of 134.520.
+MAX_FLOW_RATE_LITERS_PER_MIN = 25.0
 
 # Two consecutive readings closer together in time than this (and still rising) are
 # considered the same continuous draw. Must exceed the camera's capture cadence
@@ -164,10 +173,16 @@ class CleanResult:
     rejected_unparsable: int
     rejected_backwards: int
     rejected_jump: int
+    rejected_rate: int
 
     @property
     def rejected_total(self) -> int:
-        return self.rejected_unparsable + self.rejected_backwards + self.rejected_jump
+        return (
+            self.rejected_unparsable
+            + self.rejected_backwards
+            + self.rejected_jump
+            + self.rejected_rate
+        )
 
 
 @dataclass(frozen=True)
@@ -235,8 +250,12 @@ def read_excel_with_retry(path: Path, logger: RunLogger, room_key: str) -> pd.Da
 def clean_readings(frame: pd.DataFrame) -> CleanResult:
     """Sort by time, coerce types, and reject physically impossible readings.
 
-    A cumulative meter can only ever go up. So a reading is rejected when it is
-    below the last ACCEPTED reading, or above it by more than MAX_PLAUSIBLE_JUMP_M3.
+    A cumulative meter can only ever go up, and it can only go up as fast as water
+    can physically flow through it. A reading is rejected when it is:
+      * below the last ACCEPTED reading (meters do not run backwards),
+      * above it by more than MAX_PLAUSIBLE_JUMP_M3 (absolute backstop), or
+      * above it fast enough to imply more than MAX_FLOW_RATE_LITERS_PER_MIN.
+
     Rejection never advances "last known good" -- every later row is still compared
     against the last genuinely trusted value.
     """
@@ -268,12 +287,15 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
     readings: list[Reading] = []
     rejected_backwards = 0
     rejected_jump = 0
+    rejected_rate = 0
     last_good_m3: float | None = None
+    last_good_ts: datetime | None = None
 
     for timestamp, reading_m3 in zip(working["_ts"], working["_reading"]):
         value = float(reading_m3)
+        moment = timestamp.to_pydatetime()
 
-        if last_good_m3 is not None:
+        if last_good_m3 is not None and last_good_ts is not None:
             if value < last_good_m3:
                 rejected_backwards += 1
                 continue
@@ -281,10 +303,20 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
                 rejected_jump += 1
                 continue
 
+            elapsed_minutes = (moment - last_good_ts).total_seconds() / 60.0
+            # Duplicate timestamps carry no elapsed time, so no rate can be derived;
+            # the absolute jump check above is the only guard that applies to them.
+            if elapsed_minutes > 0:
+                litres_gained = (value - last_good_m3) * 1000.0
+                if litres_gained / elapsed_minutes > MAX_FLOW_RATE_LITERS_PER_MIN:
+                    rejected_rate += 1
+                    continue
+
         last_good_m3 = value
+        last_good_ts = moment
         readings.append(
             Reading(
-                timestamp=timestamp.to_pydatetime(),
+                timestamp=moment,
                 reading_m3=round(value, 3),
                 reading_liters=int(round(value * 1000)),
             )
@@ -296,6 +328,7 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
         rejected_unparsable=rejected_unparsable,
         rejected_backwards=rejected_backwards,
         rejected_jump=rejected_jump,
+        rejected_rate=rejected_rate,
     )
 
 
@@ -482,25 +515,36 @@ def read_existing_shard(path: Path, logger: RunLogger) -> list[dict[str, Any]]:
 def write_monthly_shards(
     room_dir: Path, readings: list[Reading], logger: RunLogger
 ) -> list[str]:
-    """Merge this run's readings into per-month shards, keyed on timestamp.
+    """Write per-month shards from the cleaned series, keyed on timestamp.
 
-    Re-running the script cannot duplicate points: an existing timestamp is
-    overwritten in place rather than appended. Returns the sorted month keys.
+    Any month present in the current Excel history is rewritten from that history,
+    which is the authoritative source. That keeps the operation idempotent (re-running
+    never duplicates a point) while still letting a change to the cleaning rules
+    propagate into already-written shards -- a pure union-merge would pin every
+    previously-accepted OCR spike into the archive permanently.
+
+    Months with no rows in the current Excel are left untouched, so shards remain a
+    full-history archive even if the source workbook is ever trimmed or rotated.
+
+    Returns the sorted month keys covered by this run.
     """
-    by_month: dict[str, list[Reading]] = {}
+    by_month: dict[str, dict[str, dict[str, Any]]] = {}
     for reading in readings:
-        by_month.setdefault(reading.timestamp.strftime("%Y-%m"), []).append(reading)
-
-    for month, month_readings in by_month.items():
-        shard_path = room_dir / f"{month}.json"
-        merged: dict[str, dict[str, Any]] = {
-            str(item["timestamp"]): item
-            for item in read_existing_shard(shard_path, logger)
+        key = reading.timestamp.strftime(TIMESTAMP_FORMAT)
+        month = reading.timestamp.strftime("%Y-%m")
+        by_month.setdefault(month, {})[key] = {
+            "timestamp": key,
+            "reading": reading.reading_m3,
         }
-        for reading in month_readings:
-            key = reading.timestamp.strftime(TIMESTAMP_FORMAT)
-            merged[key] = {"timestamp": key, "reading": reading.reading_m3}
-        write_json(shard_path, [merged[key] for key in sorted(merged)])
+
+    for month, points in by_month.items():
+        shard_path = room_dir / f"{month}.json"
+        previous = len(read_existing_shard(shard_path, logger))
+        if previous and previous != len(points):
+            logger.log(
+                f"shard {month}.json rewritten from source: {previous} -> {len(points)} points"
+            )
+        write_json(shard_path, [points[key] for key in sorted(points)])
 
     return sorted(by_month)
 
@@ -557,7 +601,7 @@ def process_room(room_key: str, source: Path, logger: RunLogger) -> RoomResult:
         f"room={room_key} status=ok rows_read={clean.rows_read} "
         f"accepted={len(clean.readings)} rejected={clean.rejected_total} "
         f"(unparsable={clean.rejected_unparsable} backwards={clean.rejected_backwards} "
-        f"jump={clean.rejected_jump}) sessions={len(sessions)} "
+        f"jump={clean.rejected_jump} rate={clean.rejected_rate}) sessions={len(sessions)} "
         f"banhos={sum(1 for s in sessions if s.session_type == 'banho')} "
         f"descargas={sum(1 for s in sessions if s.session_type == 'descarga')} "
         f"outages={outages} months={','.join(months) or '-'} "

@@ -1,0 +1,379 @@
+/* ==========================================================================
+   Neureka - Monitor de Água
+   Hot meters are amber, cold meters are cyan. That pairing is used for every
+   accent, chart line, badge and tile on the page, so temperature is always
+   readable from colour alone.
+   ========================================================================== */
+
+:root {
+  --bg: #070a0f;
+  --bg-raised: #0e141d;
+  --surface: #121a24;
+  --surface-hi: #17212d;
+  --border: #1f2b3a;
+  --border-hi: #2b3a4d;
+
+  --text: #e8eef6;
+  --text-muted: #8ea0b5;
+  --text-faint: #5d6f85;
+
+  --hot: #fb923c;
+  --hot-strong: #f97316;
+  --hot-soft: rgba(251, 146, 60, 0.14);
+  --hot-line: rgba(251, 146, 60, 0.35);
+
+  --cold: #38bdf8;
+  --cold-strong: #0ea5e9;
+  --cold-soft: rgba(56, 189, 248, 0.14);
+  --cold-line: rgba(56, 189, 248, 0.35);
+
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shell: 1240px;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px -12px rgba(0, 0, 0, .7);
+
+  --font: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+          "Helvetica Neue", Arial, sans-serif;
+  --font-num: "SF Mono", "Cascadia Mono", "JetBrains Mono", ui-monospace,
+              "Consolas", monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* The page background lives on <html> so the aurora can sit at z-index -1:
+   the root background paints first, the aurora paints above it, and all page
+   content paints above both without needing a stacking rule of its own. */
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.018em; }
+p { margin: 0; }
+code {
+  font-family: var(--font-num);
+  font-size: .9em;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: .1em .4em;
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: clamp(16px, 4vw, 40px);
+}
+
+.muted { color: var(--text-muted); }
+
+/* Ambient wash behind the page - one warm pool, one cool pool. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 50% at 12% -8%, rgba(251, 146, 60, .10), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 88% -12%, rgba(56, 189, 248, .12), transparent 60%);
+}
+
+/* ---------------------------------------------------------------- masthead */
+
+.masthead {
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 10, 15, .72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.masthead__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-block: 16px;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: var(--cold);
+  background: linear-gradient(150deg, var(--cold-soft), var(--hot-soft));
+  border: 1px solid var(--border-hi);
+  flex: none;
+}
+.brand__mark svg { width: 21px; height: 21px; }
+
+.brand__text { display: flex; flex-direction: column; line-height: 1.2; }
+.brand__text strong { font-size: 1.02rem; letter-spacing: -0.02em; }
+.brand__text span { font-size: .78rem; color: var(--text-faint); }
+
+.sync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: .8rem;
+}
+.sync__label { color: var(--text-faint); }
+.sync__value { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+.sync__dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text-faint);
+  flex: none;
+}
+.sync[data-state="ok"]    .sync__dot { background: var(--ok);   box-shadow: 0 0 0 3px rgba(52, 211, 153, .16); }
+.sync[data-state="stale"] .sync__dot { background: var(--warn); box-shadow: 0 0 0 3px rgba(251, 191, 36, .16); }
+.sync[data-state="error"] .sync__dot { background: var(--danger); box-shadow: 0 0 0 3px rgba(248, 113, 113, .16); }
+
+/* ---------------------------------------------------------------- sections */
+
+.section { padding-block: clamp(28px, 5vw, 52px); }
+.section + .section { border-top: 1px solid var(--border); }
+
+.section__head { margin-bottom: 22px; }
+.section__title { font-size: clamp(1.15rem, 2.4vw, 1.45rem); }
+.section__sub { color: var(--text-muted); font-size: .88rem; margin-top: 5px; max-width: 62ch; }
+
+.grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+}
+.grid--wide { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+
+.alert {
+  border: 1px solid rgba(248, 113, 113, .35);
+  background: rgba(248, 113, 113, .09);
+  color: #fecaca;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: .88rem;
+  margin-top: 22px;
+}
+
+/* ------------------------------------------------------------------- cards */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--surface-hi), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Temperature accent along the top edge. */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--accent, var(--border-hi));
+  opacity: .85;
+}
+.card[data-temp="quente"] { --accent: linear-gradient(90deg, var(--hot-strong), var(--hot)); }
+.card[data-temp="fria"]   { --accent: linear-gradient(90deg, var(--cold-strong), var(--cold)); }
+.card--empty::before { background: var(--border-hi); }
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 0;
+}
+
+.card__title { font-size: 1rem; }
+.card__meta { font-size: .74rem; color: var(--text-faint); margin-top: 3px; font-family: var(--font-num); }
+
+.badge {
+  flex: none;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.badge--quente { color: var(--hot);  background: var(--hot-soft);  border-color: var(--hot-line); }
+.badge--fria   { color: var(--cold); background: var(--cold-soft); border-color: var(--cold-line); }
+.badge--empty  { color: var(--text-faint); background: var(--bg-raised); border-color: var(--border); }
+
+/* Current-reading tile */
+.tile {
+  margin: 16px 20px 0;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.tile__value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.75rem, 5.5vw, 2.15rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.card[data-temp="quente"] .tile__value { color: var(--hot); }
+.card[data-temp="fria"]   .tile__value { color: var(--cold); }
+.tile__unit  { font-size: .95rem; color: var(--text-muted); }
+.tile__label { margin-left: auto; font-size: .72rem; color: var(--text-faint); text-align: right; }
+
+.chart-wrap {
+  position: relative;
+  margin: 16px 12px 14px;
+  height: 190px;
+}
+.chart-wrap--tall { height: 220px; }
+.chart-wrap canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+
+.card__note {
+  padding: 0 20px 16px;
+  font-size: .74rem;
+  color: var(--text-faint);
+}
+
+/* Placeholder card for a meter that has no data yet */
+.card--empty {
+  min-height: 230px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 22px;
+  border-style: dashed;
+  background: rgba(18, 26, 36, .45);
+}
+.card--empty .card__title { color: var(--text-muted); }
+.empty__icon {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border-radius: 11px;
+  border: 1px dashed var(--border-hi);
+  color: var(--text-faint);
+  margin-bottom: 12px;
+}
+.empty__icon svg { width: 19px; height: 19px; }
+.empty__text { font-size: .82rem; color: var(--text-faint); margin-top: 6px; max-width: 30ch; }
+
+/* ------------------------------------------------------------------- stats */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  padding: 16px 20px 0;
+}
+
+.stat {
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+}
+.stat__label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-faint);
+  display: block;
+  margin-bottom: 5px;
+}
+.stat__value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.28rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.stat__value small { font-size: .62em; font-weight: 400; color: var(--text-muted); margin-left: 3px; }
+.stat--hot  .stat__value { color: var(--hot); }
+.stat--cold .stat__value { color: var(--cold); }
+.stat__value--none { color: var(--text-faint) !important; }
+
+/* Legend shared by the analysis charts */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 20px 0;
+  font-size: .76rem;
+  color: var(--text-muted);
+}
+.legend__item { display: flex; align-items: center; gap: 6px; }
+.legend__swatch { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.legend__swatch--hot  { background: var(--hot); }
+.legend__swatch--cold { background: var(--cold); }
+
+/* ------------------------------------------------------------------ footer */
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding-block: 26px;
+  margin-top: 22px;
+  color: var(--text-faint);
+  font-size: .78rem;
+}
+.footer p { max-width: 76ch; }
+
+/* --------------------------------------------------------------- responsive */
+
+@media (max-width: 720px) {
+  .masthead__inner { padding-block: 13px; }
+  .sync { width: 100%; justify-content: flex-start; }
+  .grid, .grid--wide { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 400px) {
+  body { font-size: 14px; }
+  .card__head { padding: 15px 15px 0; }
+  .tile { margin: 13px 15px 0; padding: 12px 13px; }
+  .stats { padding: 13px 15px 0; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .legend { padding: 12px 15px 0; gap: 10px; }
+  .chart-wrap { margin: 13px 7px 12px; height: 165px; }
+  .card__note { padding: 0 15px 14px; }
+  .tile__label { margin-left: 0; width: 100%; text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

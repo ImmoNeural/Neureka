@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Neureka · Monitor de Água</title>
+  <meta name="description" content="Monitoramento de consumo de água por cômodo, lido por câmera e OCR.">
+  <meta name="color-scheme" content="dark">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="shell masthead__inner">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.7c3.4 4.2 6 7.6 6 10.7a6 6 0 0 1-12 0c0-3.1 2.6-6.5 6-10.7Z"/>
+          </svg>
+        </span>
+        <span class="brand__text">
+          <strong>Neureka</strong>
+          <span>Monitor de Água</span>
+        </span>
+      </div>
+
+      <div class="sync" id="sync-banner" data-state="loading">
+        <span class="sync__dot" aria-hidden="true"></span>
+        <span class="sync__label">Última atualização</span>
+        <span class="sync__value" id="sync-value">carregando…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <p class="alert" id="global-alert" role="alert" hidden></p>
+
+    <section class="section" aria-labelledby="meters-title">
+      <div class="section__head">
+        <h2 class="section__title" id="meters-title">Medidores</h2>
+        <p class="section__sub">Leitura acumulada de cada hidrômetro, em metros cúbicos.</p>
+      </div>
+      <div class="grid" id="meter-grid">
+        <p class="muted" id="meters-loading">Carregando medidores…</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="analysis-title">
+      <div class="section__head">
+        <h2 class="section__title" id="analysis-title">Análises</h2>
+        <p class="section__sub">
+          Banhos e descargas detectados por dia. Médias calculadas sobre os últimos 7 dias com dados.
+        </p>
+      </div>
+      <div class="grid grid--wide" id="analysis-grid">
+        <p class="muted" id="analysis-loading">Carregando análises…</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">
+      <p>
+        Leituras capturadas por câmera + OCR a cada 5–10 min. Sessões são inferidas por heurística —
+        consulte o <code>README.md</code> para as limitações conhecidas.
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+          integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+          crossorigin="anonymous"></script>
+  <script src="app.js"></script>
+</body>
+</html>

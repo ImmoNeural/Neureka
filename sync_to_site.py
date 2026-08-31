@@ -51,6 +51,11 @@ CAMERA_ROOT = Path(r"C:\Users\Thiago\Documents\Claude Local\Ch.Hiller\Camera")
 
 EXCEL_FILENAME = "leituras_hidrometro.xlsx"
 
+# Repo-relative path to the manifest, and the manifest keys that change on every run
+# regardless of whether any water data changed.
+MANIFEST_REL_PATH = "data/manifest.json"
+VOLATILE_MANIFEST_KEYS = ('"last_sync"', '"generated_at"')
+
 # Every meter this site knows about, in display order.
 # banheiro_quente is the meter that exists today and lives at the pipeline's
 # original flat path. The other four are looked up at
@@ -641,6 +646,37 @@ def ensure_repo(logger: RunLogger) -> bool:
     return True
 
 
+def changed_paths(logger: RunLogger) -> list[str] | None:
+    """Repo-relative paths with staged or unstaged changes. None if git failed."""
+    result = run_git(["status", "--porcelain"])
+    if result.returncode != 0:
+        logger.log(f"git=status_failed {result.stderr.strip()}")
+        return None
+    # Porcelain v1 format: two status chars, a space, then the path.
+    return [line[3:].strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def manifest_diff_is_timestamp_only() -> bool:
+    """True when the staged manifest differs from HEAD only in its sync timestamps.
+
+    manifest.json carries last_sync/generated_at, which change on every single run.
+    Without this check an hourly Scheduled Task would commit ~24 times a day purely
+    to bump a clock, burying real consumption changes in noise.
+    """
+    result = run_git(["diff", "--cached", "--unified=0", "--", MANIFEST_REL_PATH])
+    if result.returncode != 0:
+        return False  # cannot prove it is noise, so treat it as a real change
+
+    for line in result.stdout.splitlines():
+        if line.startswith(("+++", "---", "@@", "diff ", "index ", "new file")):
+            continue
+        if line.startswith(("+", "-")):
+            body = line[1:].strip()
+            if not any(key in body for key in VOLATILE_MANIFEST_KEYS):
+                return False
+    return True
+
+
 def has_remote() -> bool:
     result = run_git(["remote"])
     return result.returncode == 0 and bool(result.stdout.strip())
@@ -660,13 +696,19 @@ def commit_and_push(logger: RunLogger, run_started: datetime) -> int:
         logger.log(f"git=add_failed {add.stderr.strip()}")
         return 1
 
-    status = run_git(["status", "--porcelain"])
-    if status.returncode != 0:
-        logger.log(f"git=status_failed {status.stderr.strip()}")
+    changed = changed_paths(logger)
+    if changed is None:
         return 1
 
-    if not status.stdout.strip():
+    if not changed:
         logger.log("git=no_changes push=skipped")
+        return 0
+
+    if changed == [MANIFEST_REL_PATH] and manifest_diff_is_timestamp_only():
+        # Nothing but the clock moved. Unstage and discard so the working tree stays
+        # identical to HEAD and the next run compares against a stable baseline.
+        run_git(["restore", "--staged", "--worktree", "--", MANIFEST_REL_PATH])
+        logger.log("git=no_data_changes push=skipped (manifest timestamp only)")
         return 0
 
     message = f"sync: {run_started.astimezone(timezone.utc).isoformat()}"

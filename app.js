@@ -90,6 +90,21 @@ function formatDayShort(isoDate) {
   return parsed.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
+/**
+ * Rotulo do eixo X do grafico de leituras: dia E hora.
+ *
+ * Antes daqui o rotulo era so o dia. Com uma foto a cada 10 minutos, as ~50
+ * leituras de um mesmo dia recebiam rotulos identicos, e o eixo nao dizia nada
+ * sobre horario - dava para ver QUE houve leitura, nunca QUANDO. Um trecho sem
+ * captura (placa sem energia, por exemplo) ficava indistinguivel de um trecho
+ * de consumo zero: os dois viram linha reta.
+ */
+function formatStampShort(date) {
+  return date.toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  }).replace(',', '');
+}
+
 /** The physical room a meter belongs to: "banheiro_quente" -> "banheiro". */
 function roomGroupOf(roomKey) {
   const index = roomKey.lastIndexOf('_');
@@ -297,7 +312,7 @@ async function loadHistory(room) {
       const at = parseStamp(entry && entry.timestamp);
       const reading = Number(entry && entry.reading);
       if (!at || !Number.isFinite(reading)) continue;
-      points.push({ at, reading, date: formatDayShort(entry.timestamp.slice(0, 10)) });
+      points.push({ at, reading, date: formatStampShort(at) });
     }
   }
   points.sort((a, b) => a.at - b.at);

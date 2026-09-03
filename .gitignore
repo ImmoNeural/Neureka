@@ -12,3 +12,17 @@ __pycache__/
 Thumbs.db
 desktop.ini
 *.tmp
+
+# Nomes reservados do Windows (nul, con, aux, prn...). Um arquivo chamado "nul"
+# aparece por engano quando algo redireciona para /dev/null nesta pasta -- o git
+# nao consegue indexar e TODO "git add" passa a falhar, derrubando o sync em
+# silencio (exit=1) enquanto os dados continuam sendo gerados. Aconteceu em
+# 02/09/2026 as 23h: tres horas sem publicar.
+nul
+con
+aux
+prn
+
+# Backups locais (.antes-*, .bak) nao entram no site.
+*.antes-*
+*.bak

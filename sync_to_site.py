@@ -658,7 +658,13 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
         minutes = (current.timestamp - previous.timestamp).total_seconds() / 60.0
         if minutes <= 0:
             continue
-        litres = max(0, current.reading_liters - previous.reading_liters)
+        # SIGNED, not clamped at zero. Clamping looks harmless and is not: the
+        # backwards guard tolerates 5 litres of thousandths-wheel noise, so a
+        # reading may dip a litre and recover. Summing max(0, delta) counts the
+        # recovery without ever counting the dip, and the total drifts upwards --
+        # it reported 553 L on data whose endpoints differ by 512. Signed deltas
+        # telescope: their sum is exactly last minus first, always.
+        litres = current.reading_liters - previous.reading_liters
         is_gap = minutes > SESSION_MAX_GAP_MINUTES
         if is_gap:
             gap_count += 1
@@ -694,8 +700,10 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
         known = values["observed_minutes"] + values["gap_minutes"]
         daily_rows.append({
             "date": date_key,
-            "liters": round(values["liters"]),
-            "gap_liters": round(values["gap_liters"]),
+            # Floored at display time only. A day can only net negative through
+            # reading noise, and "-1 L consumed" is a lie the chart would tell.
+            "liters": max(0, round(values["liters"])),
+            "gap_liters": max(0, round(values["gap_liters"])),
             "observed_pct": round(100.0 * values["observed_minutes"] / known, 1) if known else 0.0,
         })
 
@@ -704,10 +712,10 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
         bucket = hourly[hour]
         rate = None
         if bucket["observed_minutes"] >= 30:
-            rate = round(bucket["liters"] / (bucket["observed_minutes"] / 60.0), 2)
+            rate = max(0.0, round(bucket["liters"] / (bucket["observed_minutes"] / 60.0), 2))
         hourly_rows.append({
             "hour": hour,
-            "liters": round(bucket["liters"]),
+            "liters": max(0, round(bucket["liters"])),
             "observed_minutes": round(bucket["observed_minutes"]),
             "liters_per_observed_hour": rate,
         })
@@ -725,7 +733,10 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
             "gap_count": gap_count,
         },
         "volume": {
-            "total_liters": round(observed_liters + gap_liters),
+            # The meter is cumulative, so the endpoint difference IS the total --
+            # no summation needed and no rounding to accumulate. observed/gap split
+            # it by where the water flowed, and the two add back to it.
+            "total_liters": readings[-1].reading_liters - readings[0].reading_liters,
             "observed_liters": round(observed_liters),
             "gap_liters": round(gap_liters),
         },

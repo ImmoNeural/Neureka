@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -102,6 +103,33 @@ MAX_PLAUSIBLE_JUMP_M3 = 5.0
 # known good", every later true reading is then discarded as backwards. That single
 # spike cost 13 of 18 rows and reported 134.641 as current instead of 134.520.
 MAX_FLOW_RATE_LITERS_PER_MIN = 25.0
+
+# How many accepted readings form the anchor the backwards guard compares against.
+#
+# Do NOT compare against the single last accepted reading. That is not a style
+# preference -- it is the failure mode that took this site off the air for five
+# hours on 2026-09-12, and the paragraph above describes its cousin.
+#
+# What happened: at 17:53:31 the OCR read 134.966 where the truth was 134.965 --
+# ONE litre too high, well inside the noise of the thousandths wheel. That litre
+# became the floor. The next nine readings were all correct and all sat one litre
+# below it, so every one was rejected as "backwards". Because a rejection never
+# lowers the floor, the gate stayed shut: the site would have kept reporting
+# 134.966 until the household drew one more litre of hot water than it already had.
+#
+# The upstream reader (Leitura.py) assumes 5 for the thousandths digit when the
+# wheel is in motion, with a declared error of +-5 litres. So a one-litre
+# disagreement between consecutive readings is EXPECTED, not evidence of a misread.
+#
+# A median over five accepted readings cannot be moved by a single high outlier,
+# so the floor repairs itself on the next good reading instead of latching shut.
+ANCHOR_WINDOW = 5
+
+# Tolerance below the anchor, in cubic metres, before a reading counts as going
+# backwards. 0.005 m3 = 5 litres = exactly the uncertainty Leitura.py injects when
+# it assumes the spinning thousandths digit. It is not licence to run backwards:
+# the real misreads this guard must catch are 20-320 litres, far outside it.
+BACKWARDS_TOLERANCE_M3 = 0.005
 
 # Two consecutive readings closer together in time than this (and still rising) are
 # considered the same continuous draw. Must exceed the camera's capture cadence
@@ -257,12 +285,23 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
 
     A cumulative meter can only ever go up, and it can only go up as fast as water
     can physically flow through it. A reading is rejected when it is:
-      * below the last ACCEPTED reading (meters do not run backwards),
-      * above it by more than MAX_PLAUSIBLE_JUMP_M3 (absolute backstop), or
+      * below the ANCHOR by more than BACKWARDS_TOLERANCE_M3 (meters do not run
+        backwards), where the anchor is the median of the last ANCHOR_WINDOW
+        accepted readings -- not the single last one, which latches the gate shut
+        after any one-litre over-read (see ANCHOR_WINDOW for the incident),
+      * above the last accepted reading by more than MAX_PLAUSIBLE_JUMP_M3
+        (absolute backstop), or
       * above it fast enough to imply more than MAX_FLOW_RATE_LITERS_PER_MIN.
 
-    Rejection never advances "last known good" -- every later row is still compared
-    against the last genuinely trusted value.
+    The jump and rate guards stay anchored to the last accepted reading and its
+    timestamp, because both are statements about two samples adjacent in TIME. Only
+    the backwards guard uses the median, because it is a statement about where the
+    meter actually stands, and that estimate must survive one bad reading.
+
+    Rejection never advances "last known good". A reading accepted slightly below it
+    is allowed to lower it -- that is the self-repair, and it is safe: sessions only
+    extend while the meter rises and only record volume > 0, so a one-litre
+    correction downwards closes the current run instead of inventing consumption.
     """
     rows_read = len(frame)
 
@@ -301,7 +340,9 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
         moment = timestamp.to_pydatetime()
 
         if last_good_m3 is not None and last_good_ts is not None:
-            if value < last_good_m3:
+            recent = [r.reading_m3 for r in readings[-ANCHOR_WINDOW:]]
+            anchor = statistics.median(recent) if recent else last_good_m3
+            if value < anchor - BACKWARDS_TOLERANCE_M3:
                 rejected_backwards += 1
                 continue
             if value - last_good_m3 > MAX_PLAUSIBLE_JUMP_M3:

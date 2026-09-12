@@ -363,6 +363,67 @@ code {
   .grid, .grid--wide { grid-template-columns: 1fr; }
 }
 
+/* --------------------------------------------------- analysis subsections */
+
+.card__subtitle {
+  padding: 18px 20px 0;
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-muted);
+}
+
+.stat--total .stat__value { color: var(--text); }
+
+/* Coverage strip.
+   Deliberately plain and always visible. It is the one element that states what
+   the charts above cannot show, so it must not read as decoration. */
+.coverage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 20px 18px;
+}
+.coverage__row { display: flex; flex-direction: column; gap: 6px; }
+.coverage__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.coverage__name {
+  font-size: .74rem;
+  color: var(--text-muted);
+}
+.coverage__pct {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.coverage__track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.coverage__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--text-faint);
+  min-width: 2px;
+}
+.coverage__row[data-temp="quente"] .coverage__fill { background: var(--hot); }
+.coverage__row[data-temp="fria"]   .coverage__fill { background: var(--cold); }
+.coverage__note {
+  font-size: .74rem;
+  line-height: 1.45;
+  color: var(--text-faint);
+  max-width: 62ch;
+}
+
 @media (max-width: 400px) {
   body { font-size: 14px; }
   .card__head { padding: 15px 15px 0; }
@@ -371,6 +432,8 @@ code {
   .legend { padding: 12px 15px 0; gap: 10px; }
   .chart-wrap { margin: 13px 7px 12px; height: 165px; }
   .card__note { padding: 0 15px 14px; }
+  .card__subtitle { padding: 15px 15px 0; }
+  .coverage { padding: 10px 15px 15px; gap: 12px; }
   .tile__label { margin-left: 0; width: 100%; text-align: left; }
 }
 

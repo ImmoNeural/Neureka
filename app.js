@@ -321,43 +321,170 @@ async function loadHistory(room) {
 
 /* ----------------------------------------------------------- analysis cards */
 
-/**
- * Weighted trailing average litres per session.
- * daily.json stores a per-day average and a count, so the true total for a day
- * is avg * count; summing those recovers an exact weighted mean.
+/*
+ * The analysis section reports VOLUME, not events.
+ *
+ * A cumulative meter measures how much water passed exactly, even when it is
+ * photographed only every ten minutes. What that sampling rate destroys is when
+ * and how fast. Counting showers and flushes needs both, so those counts are not
+ * shown here: on the real bathroom series the session layer placed 124 of 512
+ * litres and implied 1.5-4.7 L/min for showers that physically run 8-12.
+ *
+ * Litres per day, litres per hour of day, and how much of the period was actually
+ * observed are all things the meter genuinely knows. Those are what this renders,
+ * and the coverage strip states the blind spot outright rather than letting an
+ * unobserved stretch read as a quiet one.
  */
-function trailingAverage(days, avgKey, countKey) {
-  let liters = 0;
-  let count = 0;
-  for (const day of days.slice(-TRAILING_DAYS)) {
-    const dayCount = Number(day[countKey]) || 0;
-    const dayAvg = Number(day[avgKey]) || 0;
-    liters += dayAvg * dayCount;
-    count += dayCount;
-  }
-  return count ? { average: liters / count, count } : null;
+
+// How many trailing days the per-day volume chart shows.
+const VOLUME_DAYS = 14;
+
+// Below this much observation an hour's litres-per-hour is a small denominator
+// amplifying noise, so the backend leaves it null and the chart leaves it blank.
+const HOUR_LABELS = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}h`);
+
+/** Litres per day, one grouped bar series per meter. */
+function renderVolumeChart(canvas, labels, series) {
+  return new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: series.map((entry) => ({
+        label: entry.label,
+        data: entry.values,
+        backgroundColor: entry.color,
+        borderRadius: 4,
+        borderSkipped: false,
+        maxBarThickness: 22
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...TOOLTIP_STYLE,
+          displayColors: true,
+          callbacks: { label: (item) => `${item.dataset.label}: ${item.parsed.y} L` }
+        }
+      },
+      scales: {
+        ...baseScales('litros'),
+        y: { ...baseScales('litros').y, beginAtZero: true }
+      }
+    }
+  });
 }
 
-function statBlock(label, result, modifier, unit) {
+/** Litres per observed hour, by hour of day. Unobserved hours stay empty. */
+function renderHourlyChart(canvas, series) {
+  return new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: HOUR_LABELS,
+      datasets: series.map((entry) => ({
+        label: entry.label,
+        data: entry.values,
+        backgroundColor: entry.color,
+        borderRadius: 3,
+        borderSkipped: false,
+        maxBarThickness: 14
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...TOOLTIP_STYLE,
+          displayColors: true,
+          callbacks: {
+            label: (item) => (
+              item.parsed.y === null
+                ? `${item.dataset.label}: sem observação`
+                : `${item.dataset.label}: ${item.parsed.y} L/h observada`
+            )
+          }
+        }
+      },
+      scales: {
+        ...baseScales('L / hora observada'),
+        x: {
+          ...baseScales().x,
+          ticks: { ...baseScales().x.ticks, autoSkipPadding: 4 }
+        },
+        y: { ...baseScales('L / hora observada').y, beginAtZero: true }
+      }
+    }
+  });
+}
+
+/** One figure with a caption. Value is pre-formatted; unit renders smaller. */
+function volumeStat(label, value, modifier, unit) {
   const stat = el('div', `stat ${modifier}`);
   stat.append(el('span', 'stat__label', label));
-
-  const value = el('div', 'stat__value');
-  if (result) {
-    value.append(document.createTextNode(result.average.toFixed(1)));
-    value.append(el('small', null, unit));
+  const box = el('div', 'stat__value');
+  if (value === null || value === undefined) {
+    box.classList.add('stat__value--none');
+    box.textContent = '—';
   } else {
-    value.classList.add('stat__value--none');
-    value.textContent = '—';
+    box.append(document.createTextNode(String(value)));
+    if (unit) box.append(el('small', null, unit));
   }
-  stat.append(value);
+  stat.append(box);
   return stat;
+}
+
+/**
+ * The coverage strip. This is the part that keeps the rest honest: it says how
+ * much of the period had readings at all, and how many litres flowed while the
+ * camera was blind. Those litres are real and counted in the total, but they
+ * cannot be placed on a day or an hour, so every chart above is missing them.
+ */
+function coverageStrip(members) {
+  const wrap = el('div', 'coverage');
+
+  for (const member of members) {
+    const { room, analysis } = member;
+    const coverage = analysis.coverage;
+    const volume = analysis.volume;
+    if (!coverage || !volume) continue;
+
+    const row = el('div', 'coverage__row');
+    row.dataset.temp = room.temperature;
+
+    const head = el('div', 'coverage__head');
+    head.append(el('span', 'coverage__name', titleCase(room.temperature)));
+    head.append(el('span', 'coverage__pct', `${coverage.observed_pct}% observado`));
+    row.append(head);
+
+    const track = el('div', 'coverage__track');
+    const fill = el('div', 'coverage__fill');
+    fill.style.width = `${Math.max(0, Math.min(100, coverage.observed_pct))}%`;
+    track.append(fill);
+    row.append(track);
+
+    const gapShare = volume.total_liters
+      ? Math.round((volume.gap_liters / volume.total_liters) * 100)
+      : 0;
+    row.append(el(
+      'p', 'coverage__note',
+      volume.gap_liters
+        ? `${volume.gap_liters} L (${gapShare}%) passaram durante ${coverage.gap_count} ` +
+          'lacunas de captura: estão no total, mas não podem ser situados em nenhum dia ou hora.'
+        : 'Sem lacunas de captura no período.'
+    ));
+    wrap.append(row);
+  }
+
+  return wrap.childElementCount ? wrap : null;
 }
 
 function analysisCard(group) {
   const { name, hot, cold } = group;
   const card = el('article', 'card');
-  // Mixed rooms carry the hot accent; cold-only rooms (laundry) carry the cold one.
   card.dataset.temp = hot ? 'quente' : 'fria';
 
   const head = el('div', 'card__head');
@@ -368,75 +495,101 @@ function analysisCard(group) {
   head.append(heading);
   card.append(head);
 
-  const hotDays = hot ? hot.daily : [];
-  const coldDays = cold ? cold.daily : [];
+  const members = [hot, cold].filter((m) => m && m.analysis && m.analysis.volume);
+
+  if (!members.length) {
+    card.append(el('p', 'card__note', 'Ainda sem leituras suficientes para medir volume.'));
+    return card;
+  }
+
+  const hotVolume = hot?.analysis?.volume?.total_liters ?? null;
+  const coldVolume = cold?.analysis?.volume?.total_liters ?? null;
+  const total = members.reduce((sum, m) => sum + m.analysis.volume.total_liters, 0);
 
   const stats = el('div', 'stats');
-  stats.append(statBlock(
-    'Média por banho',
-    hot ? trailingAverage(hotDays, 'avg_liters_per_banho', 'banho_count') : null,
-    'stat--hot', 'L'
-  ));
-  stats.append(statBlock(
-    'Média por descarga',
-    cold ? trailingAverage(coldDays, 'avg_liters_per_descarga', 'descarga_count') : null,
-    'stat--cold', 'L'
-  ));
+  stats.append(volumeStat('Total medido', total, 'stat--total', 'L'));
+  stats.append(volumeStat('Quente', hotVolume, 'stat--hot', 'L'));
+  stats.append(volumeStat('Fria', coldVolume, 'stat--cold', 'L'));
   card.append(stats);
 
-  // Union of both meters' dates so the bars line up on a shared axis.
-  const dates = [...new Set([...hotDays, ...coldDays].map((day) => day.date))].sort();
-  const recent = dates.slice(-TRAILING_DAYS * 2);
+  /* ---- litros por dia, quente x fria ---- */
 
-  if (!recent.length) {
-    card.append(el('p', 'card__note', 'Nenhuma sessão de uso detectada ainda.'));
-    return card;
+  const dates = [...new Set(
+    members.flatMap((m) => m.analysis.daily.map((day) => day.date))
+  )].sort().slice(-VOLUME_DAYS);
+
+  if (dates.length) {
+    const legend = el('div', 'legend');
+    const series = [];
+
+    for (const member of members) {
+      const isHot = member.room.temperature === 'quente';
+      const byDate = new Map(member.analysis.daily.map((day) => [day.date, day]));
+      series.push({
+        label: isHot ? 'Quente' : 'Fria',
+        color: isHot ? COLORS.quente.bar : COLORS.fria.bar,
+        values: dates.map((date) => byDate.get(date)?.liters ?? 0)
+      });
+      const item = el('span', 'legend__item');
+      item.append(el('span', `legend__swatch legend__swatch--${isHot ? 'hot' : 'cold'}`));
+      item.append(document.createTextNode(isHot ? 'Quente (L/dia)' : 'Fria (L/dia)'));
+      legend.append(item);
+    }
+    card.append(el('h4', 'card__subtitle', 'Litros por dia'));
+    card.append(legend);
+
+    if (chartsAvailable) {
+      const wrap = el('div', 'chart-wrap chart-wrap--tall');
+      const canvas = el('canvas');
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', `Litros por dia em ${name}`);
+      wrap.append(canvas);
+      card.append(wrap);
+      renderVolumeChart(canvas, dates.map(formatDayShort), series);
+    } else {
+      card.append(el('p', 'card__note', 'Gráfico indisponível: a biblioteca Chart.js não carregou.'));
+    }
   }
 
-  const legend = el('div', 'legend');
-  const series = [];
+  /* ---- perfil por hora do dia ---- */
 
-  if (hot) {
-    const byDate = new Map(hotDays.map((day) => [day.date, day]));
-    series.push({
-      label: 'Banhos',
-      color: COLORS.quente.bar,
-      values: recent.map((date) => (byDate.get(date)?.banho_count) ?? 0)
-    });
-    const item = el('span', 'legend__item');
-    item.append(el('span', 'legend__swatch legend__swatch--hot'));
-    item.append(document.createTextNode('Banhos (medidor quente)'));
-    legend.append(item);
+  const hourSeries = members
+    .filter((m) => Array.isArray(m.analysis.hourly))
+    .map((member) => {
+      const isHot = member.room.temperature === 'quente';
+      return {
+        label: isHot ? 'Quente' : 'Fria',
+        color: isHot ? COLORS.quente.bar : COLORS.fria.bar,
+        values: member.analysis.hourly.map((entry) => entry.liters_per_observed_hour)
+      };
+    })
+    .filter((entry) => entry.values.some((value) => value !== null && value !== undefined));
+
+  if (hourSeries.length) {
+    card.append(el('h4', 'card__subtitle', 'Perfil por hora do dia'));
+    card.append(el(
+      'p', 'card__note',
+      'Litros por hora observada — corrige o viés das horas em que a câmera esteve fora.'
+    ));
+    if (chartsAvailable) {
+      const wrap = el('div', 'chart-wrap');
+      const canvas = el('canvas');
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', `Consumo por hora do dia em ${name}`);
+      wrap.append(canvas);
+      card.append(wrap);
+      renderHourlyChart(canvas, hourSeries);
+    }
   }
 
-  if (cold) {
-    const byDate = new Map(coldDays.map((day) => [day.date, day]));
-    series.push({
-      label: 'Descargas',
-      color: COLORS.fria.bar,
-      values: recent.map((date) => (byDate.get(date)?.descarga_count) ?? 0)
-    });
-    const item = el('span', 'legend__item');
-    item.append(el('span', 'legend__swatch legend__swatch--cold'));
-    item.append(document.createTextNode('Descargas (medidor frio)'));
-    legend.append(item);
+  /* ---- cobertura ---- */
+
+  const strip = coverageStrip(members);
+  if (strip) {
+    card.append(el('h4', 'card__subtitle', 'Cobertura da captura'));
+    card.append(strip);
   }
 
-  card.append(legend);
-
-  if (!chartsAvailable) {
-    card.append(el('p', 'card__note', 'Gráfico indisponível: a biblioteca Chart.js não carregou.'));
-    return card;
-  }
-
-  const wrap = el('div', 'chart-wrap chart-wrap--tall');
-  const canvas = el('canvas');
-  canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', `Sessões por dia em ${name}`);
-  wrap.append(canvas);
-  card.append(wrap);
-
-  renderSessionChart(canvas, recent.map(formatDayShort), series);
   return card;
 }
 
@@ -510,19 +663,19 @@ async function init() {
   });
 
   // Analysis is per physical room, pairing that room's hot and cold meters.
-  const dailyByRoom = new Map();
+  const analysisByRoom = new Map();
   await Promise.all(rooms.filter((room) => room.has_data).map(async (room) => {
-    const daily = await fetchJson(`${DATA_ROOT}/${room.room_key}/daily.json`);
-    if (Array.isArray(daily)) dailyByRoom.set(room.room_key, daily);
+    const analysis = await fetchJson(`${DATA_ROOT}/${room.room_key}/analysis.json`);
+    if (analysis && analysis.volume) analysisByRoom.set(room.room_key, analysis);
   }));
 
   const groups = new Map();
   for (const room of rooms) {
-    const daily = dailyByRoom.get(room.room_key);
-    if (!daily) continue;
+    const analysis = analysisByRoom.get(room.room_key);
+    if (!analysis) continue;
     const name = roomGroupOf(room.room_key);
     const group = groups.get(name) || { name, hot: null, cold: null };
-    const member = { room, daily };
+    const member = { room, analysis };
     if (room.temperature === 'quente') group.hot = member;
     else group.cold = member;
     groups.set(name, group);

@@ -33,9 +33,9 @@ import time
 import traceback
 import zipfile
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 import pandas as pd
 
@@ -596,6 +596,145 @@ def write_monthly_shards(
 
 
 # ---------------------------------------------------------------------------
+# Volume analysis
+# ---------------------------------------------------------------------------
+#
+# Why this exists alongside the session analysis, and why it is the honest one.
+#
+# A cumulative meter measures VOLUME exactly, even when sampled coarsely. What a
+# coarse sample destroys is WHEN and HOW FAST -- not HOW MUCH. The session layer
+# answers "how many showers", and at a ~10 minute sampling interval it answers it
+# badly: on 13 days of real bathroom data it attributed 124 of 512 litres, so 76%
+# of the water that actually flowed was invisible to it, and the three showers it
+# did find implied 1.5-4.7 L/min where a real shower runs 8-12.
+#
+# So this layer reports only what the meter genuinely knows: litres per day, litres
+# per hour of day, and how much of the period was observed at all. Consumption that
+# falls inside a capture gap is counted in the total but reported separately, so a
+# blind spot can never masquerade as a quiet day.
+
+def slice_by_hour(start: datetime, end: datetime) -> Iterator[tuple[datetime, float]]:
+    """Break [start, end) into pieces that never cross an hour boundary.
+
+    Yields (piece_start, minutes). An interval spanning midnight or an hour mark is
+    split, so its consumption lands on every day and hour it actually covers instead
+    of piling onto whichever timestamp happened to close it.
+    """
+    cursor = start
+    while cursor < end:
+        next_hour = cursor.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        stop = min(next_hour, end)
+        yield cursor, (stop - cursor).total_seconds() / 60.0
+        cursor = stop
+
+
+def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
+    """Measured volume per day and per hour-of-day, plus honest coverage numbers.
+
+    Every consecutive pair of accepted readings contributes its delta, spread over
+    the days and hours the interval spans in proportion to time. An interval longer
+    than SESSION_MAX_GAP_MINUTES is a capture gap: its volume is real and counted,
+    but it is tagged so the UI can show it as unplaced rather than pretending to know
+    when it happened.
+
+    The hourly profile also carries observed minutes, because raw hourly totals are
+    biased towards whichever hours the camera happened to be alive for. Litres per
+    observed hour is the comparable number, and it is left null below half an hour of
+    observation, where the ratio would be noise amplified by a small denominator.
+    """
+    if len(readings) < 2:
+        return {}
+
+    daily: dict[str, dict[str, float]] = {}
+    hourly: dict[int, dict[str, float]] = {
+        hour: {"liters": 0.0, "observed_minutes": 0.0} for hour in range(24)
+    }
+    observed_minutes = gap_minutes = 0.0
+    observed_liters = gap_liters = 0.0
+    gap_count = 0
+
+    for index in range(1, len(readings)):
+        previous, current = readings[index - 1], readings[index]
+        minutes = (current.timestamp - previous.timestamp).total_seconds() / 60.0
+        if minutes <= 0:
+            continue
+        litres = max(0, current.reading_liters - previous.reading_liters)
+        is_gap = minutes > SESSION_MAX_GAP_MINUTES
+        if is_gap:
+            gap_count += 1
+            gap_minutes += minutes
+            gap_liters += litres
+        else:
+            observed_minutes += minutes
+            observed_liters += litres
+
+        for piece_start, piece_minutes in slice_by_hour(previous.timestamp, current.timestamp):
+            share = piece_minutes / minutes
+            day = daily.setdefault(
+                piece_start.strftime("%Y-%m-%d"),
+                {"liters": 0.0, "gap_liters": 0.0,
+                 "observed_minutes": 0.0, "gap_minutes": 0.0},
+            )
+            day["liters"] += litres * share
+            if is_gap:
+                day["gap_liters"] += litres * share
+                day["gap_minutes"] += piece_minutes
+            else:
+                day["observed_minutes"] += piece_minutes
+                bucket = hourly[piece_start.hour]
+                bucket["liters"] += litres * share
+                bucket["observed_minutes"] += piece_minutes
+
+    span_hours = (readings[-1].timestamp - readings[0].timestamp).total_seconds() / 3600.0
+    total_minutes = observed_minutes + gap_minutes
+
+    daily_rows: list[dict[str, Any]] = []
+    for date_key in sorted(daily):
+        values = daily[date_key]
+        known = values["observed_minutes"] + values["gap_minutes"]
+        daily_rows.append({
+            "date": date_key,
+            "liters": round(values["liters"]),
+            "gap_liters": round(values["gap_liters"]),
+            "observed_pct": round(100.0 * values["observed_minutes"] / known, 1) if known else 0.0,
+        })
+
+    hourly_rows: list[dict[str, Any]] = []
+    for hour in range(24):
+        bucket = hourly[hour]
+        rate = None
+        if bucket["observed_minutes"] >= 30:
+            rate = round(bucket["liters"] / (bucket["observed_minutes"] / 60.0), 2)
+        hourly_rows.append({
+            "hour": hour,
+            "liters": round(bucket["liters"]),
+            "observed_minutes": round(bucket["observed_minutes"]),
+            "liters_per_observed_hour": rate,
+        })
+
+    return {
+        "span": {
+            "from": readings[0].timestamp.strftime(TIMESTAMP_FORMAT),
+            "to": readings[-1].timestamp.strftime(TIMESTAMP_FORMAT),
+            "hours": round(span_hours, 1),
+        },
+        "coverage": {
+            "observed_minutes": round(observed_minutes),
+            "gap_minutes": round(gap_minutes),
+            "observed_pct": round(100.0 * observed_minutes / total_minutes, 1) if total_minutes else 0.0,
+            "gap_count": gap_count,
+        },
+        "volume": {
+            "total_liters": round(observed_liters + gap_liters),
+            "observed_liters": round(observed_liters),
+            "gap_liters": round(gap_liters),
+        },
+        "daily": daily_rows,
+        "hourly": hourly_rows,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Per-room processing
 # ---------------------------------------------------------------------------
 
@@ -639,6 +778,8 @@ def process_room(room_key: str, source: Path, logger: RunLogger) -> RoomResult:
             },
         )
         write_json(room_dir / "daily.json", build_daily_summary(sessions))
+        analysis = build_volume_analysis(clean.readings)
+        write_json(room_dir / "analysis.json", analysis)
     except OSError as exc:
         logger.log(f"room={room_key} status=SKIPPED write_failed={exc}")
         return RoomResult(room_key=room_key, has_data=False, clean=clean, error=str(exc))
@@ -651,6 +792,9 @@ def process_room(room_key: str, source: Path, logger: RunLogger) -> RoomResult:
         f"banhos={sum(1 for s in sessions if s.session_type == 'banho')} "
         f"descargas={sum(1 for s in sessions if s.session_type == 'descarga')} "
         f"outages={outages} months={','.join(months) or '-'} "
+        f"observed={analysis.get('coverage', {}).get('observed_pct', 0)}% "
+        f"volume={analysis.get('volume', {}).get('total_liters', 0)}L "
+        f"gap={analysis.get('volume', {}).get('gap_liters', 0)}L "
         f"last={newest.reading_m3}"
     )
 

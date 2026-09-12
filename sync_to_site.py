@@ -141,6 +141,21 @@ SESSION_MERGE_GAP_MINUTES = 15
 # session -- the run is closed and the outage is logged.
 SESSION_MAX_GAP_MINUTES = 60
 
+# A gap longer than this is treated as a PLANNED ABSENCE rather than a capture
+# failure: the meters were switched off on purpose (a trip), not lost.
+#
+# The distinction is not cosmetic. On the first 13 days of real data a single
+# 209.5 h gap -- one week away with the boards unplugged -- dragged coverage down
+# to 11.4%, which reads as a broken pipeline. The twelve genuine outages in the
+# same period total 69.3 h, and coverage outside the absence is 34.0%. One of
+# those numbers is a fault to chase; the other is a holiday.
+#
+# Intent is never inferred from anything but duration. Nothing here knows about
+# travel -- it only knows that a gap this long is a different kind of event from
+# a board that browned out for two hours, and reports both instead of blending
+# them into one misleading percentage.
+LONG_ABSENCE_HOURS = 24.0
+
 # Volume threshold separating a toilet flush from a shower, in litres.
 FLUSH_VOLUME_LITERS = 15
 
@@ -651,7 +666,10 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
     }
     observed_minutes = gap_minutes = 0.0
     observed_liters = gap_liters = 0.0
+    absence_minutes = outage_minutes = 0.0
+    absence_liters = outage_liters = 0.0
     gap_count = 0
+    gaps: list[dict[str, Any]] = []
 
     for index in range(1, len(readings)):
         previous, current = readings[index - 1], readings[index]
@@ -666,10 +684,24 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
         # telescope: their sum is exactly last minus first, always.
         litres = current.reading_liters - previous.reading_liters
         is_gap = minutes > SESSION_MAX_GAP_MINUTES
+        is_absence = minutes > LONG_ABSENCE_HOURS * 60
         if is_gap:
             gap_count += 1
             gap_minutes += minutes
             gap_liters += litres
+            gaps.append({
+                "from": previous.timestamp.strftime(TIMESTAMP_FORMAT),
+                "to": current.timestamp.strftime(TIMESTAMP_FORMAT),
+                "hours": round(minutes / 60.0, 1),
+                "liters": max(0, litres),
+                "kind": "absence" if is_absence else "outage",
+            })
+            if is_absence:
+                absence_minutes += minutes
+                absence_liters += litres
+            else:
+                outage_minutes += minutes
+                outage_liters += litres
         else:
             observed_minutes += minutes
             observed_liters += litres
@@ -729,8 +761,18 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
         "coverage": {
             "observed_minutes": round(observed_minutes),
             "gap_minutes": round(gap_minutes),
+            "absence_minutes": round(absence_minutes),
+            "outage_minutes": round(outage_minutes),
             "observed_pct": round(100.0 * observed_minutes / total_minutes, 1) if total_minutes else 0.0,
+            # Coverage with planned absences taken out of the denominator. This is
+            # the number that says whether the capture pipeline is healthy; the raw
+            # one above says how much of the calendar has data.
+            "observed_pct_excl_absence": round(
+                100.0 * observed_minutes / (total_minutes - absence_minutes), 1
+            ) if (total_minutes - absence_minutes) > 0 else 0.0,
             "gap_count": gap_count,
+            "absence_count": sum(1 for g in gaps if g["kind"] == "absence"),
+            "outage_count": sum(1 for g in gaps if g["kind"] == "outage"),
         },
         "volume": {
             # The meter is cumulative, so the endpoint difference IS the total --
@@ -739,7 +781,11 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
             "total_liters": readings[-1].reading_liters - readings[0].reading_liters,
             "observed_liters": round(observed_liters),
             "gap_liters": round(gap_liters),
+            "absence_liters": max(0, round(absence_liters)),
+            "outage_liters": max(0, round(outage_liters)),
         },
+        # Longest first, capped: the UI shows a handful and the rest is noise.
+        "gaps": sorted(gaps, key=lambda g: -g["hours"])[:8],
         "daily": daily_rows,
         "hourly": hourly_rows,
     }
@@ -804,6 +850,7 @@ def process_room(room_key: str, source: Path, logger: RunLogger) -> RoomResult:
         f"descargas={sum(1 for s in sessions if s.session_type == 'descarga')} "
         f"outages={outages} months={','.join(months) or '-'} "
         f"observed={analysis.get('coverage', {}).get('observed_pct', 0)}% "
+        f"(excl_absence={analysis.get('coverage', {}).get('observed_pct_excl_absence', 0)}%) "
         f"volume={analysis.get('volume', {}).get('total_liters', 0)}L "
         f"gap={analysis.get('volume', {}).get('gap_liters', 0)}L "
         f"last={newest.reading_m3}"

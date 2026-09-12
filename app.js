@@ -437,11 +437,39 @@ function volumeStat(label, value, modifier, unit) {
   return stat;
 }
 
+/** Percentage in pt-BR: decimal comma, and no ",0" tail on round numbers. */
+function formatPct(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return (Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',')) + '%';
+}
+
+/** "8,7 h" / "8,7 dias" -- gaps run from an hour to over a week. */
+function formatDuration(hours) {
+  if (hours < 24) return `${hours.toFixed(1).replace('.', ',')} h`;
+  return `${(hours / 24).toFixed(1).replace('.', ',')} dias`;
+}
+
+/** "03/09 02:04" from "2026-09-03 02:04:27". */
+function formatGapStamp(text) {
+  const stamp = parseStamp(text);
+  if (!stamp) return text;
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  }).format(stamp).replace(',', '');
+}
+
 /**
  * The coverage strip. This is the part that keeps the rest honest: it says how
  * much of the period had readings at all, and how many litres flowed while the
  * camera was blind. Those litres are real and counted in the total, but they
  * cannot be placed on a day or an hour, so every chart above is missing them.
+ *
+ * Two percentages, deliberately. A week away with the meters unplugged is not the
+ * same failure as a board that browns out for two hours, and averaging them into
+ * one number makes a holiday look like a broken pipeline. The headline figure
+ * excludes planned absences and answers "is capture healthy"; the raw figure
+ * answers "how much of the calendar has data".
  */
 function coverageStrip(members) {
   const wrap = el('div', 'coverage');
@@ -455,27 +483,62 @@ function coverageStrip(members) {
     const row = el('div', 'coverage__row');
     row.dataset.temp = room.temperature;
 
+    const headline = Number.isFinite(coverage.observed_pct_excl_absence)
+      ? coverage.observed_pct_excl_absence
+      : coverage.observed_pct;
+
     const head = el('div', 'coverage__head');
     head.append(el('span', 'coverage__name', titleCase(room.temperature)));
-    head.append(el('span', 'coverage__pct', `${coverage.observed_pct}% observado`));
+    head.append(el('span', 'coverage__pct', `${formatPct(headline)} observado`));
     row.append(head);
 
     const track = el('div', 'coverage__track');
     const fill = el('div', 'coverage__fill');
-    fill.style.width = `${Math.max(0, Math.min(100, coverage.observed_pct))}%`;
+    fill.style.width = `${Math.max(0, Math.min(100, headline))}%`;
     track.append(fill);
     row.append(track);
 
-    const gapShare = volume.total_liters
-      ? Math.round((volume.gap_liters / volume.total_liters) * 100)
-      : 0;
+    const absenceMinutes = coverage.absence_minutes || 0;
+    if (absenceMinutes > 0) {
+      row.append(el(
+        'p', 'coverage__note',
+        `Fora de ausências programadas. Contando o calendário inteiro são ` +
+        `${formatPct(coverage.observed_pct)}: ${formatDuration(absenceMinutes / 60)} com os ` +
+        `medidores desligados, e ${volume.absence_liters} L passaram nesse período.`
+      ));
+    }
+
+    const outageLiters = volume.outage_liters ?? volume.gap_liters;
+    const outageCount = coverage.outage_count ?? coverage.gap_count;
     row.append(el(
       'p', 'coverage__note',
-      volume.gap_liters
-        ? `${volume.gap_liters} L (${gapShare}%) passaram durante ${coverage.gap_count} ` +
-          'lacunas de captura: estão no total, mas não podem ser situados em nenhum dia ou hora.'
-        : 'Sem lacunas de captura no período.'
+      outageCount
+        ? `${outageCount} quedas de captura somando ` +
+          `${formatDuration((coverage.outage_minutes || 0) / 60)}, com ${outageLiters} L ` +
+          'que estão no total mas não podem ser situados em nenhum dia ou hora.'
+        : 'Sem quedas de captura no período.'
     ));
+
+    if (Array.isArray(analysis.gaps) && analysis.gaps.length) {
+      const list = el('ul', 'gaps');
+      for (const gap of analysis.gaps.slice(0, 4)) {
+        const item = el('li', 'gaps__item');
+        item.dataset.kind = gap.kind;
+        item.append(el('span', 'gaps__dur', formatDuration(gap.hours)));
+        item.append(el(
+          'span', 'gaps__when',
+          `${formatGapStamp(gap.from)} → ${formatGapStamp(gap.to)}`
+        ));
+        item.append(el(
+          'span', 'gaps__tag',
+          gap.kind === 'absence' ? 'desligado' : 'queda'
+        ));
+        item.append(el('span', 'gaps__liters', `${gap.liters} L`));
+        list.append(item);
+      }
+      row.append(list);
+    }
+
     wrap.append(row);
   }
 

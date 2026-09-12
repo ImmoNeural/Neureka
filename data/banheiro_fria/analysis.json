@@ -7,14 +7,22 @@
   "coverage": {
     "observed_minutes": 21,
     "gap_minutes": 0,
+    "absence_minutes": 0,
+    "outage_minutes": 0,
     "observed_pct": 100.0,
-    "gap_count": 0
+    "observed_pct_excl_absence": 100.0,
+    "gap_count": 0,
+    "absence_count": 0,
+    "outage_count": 0
   },
   "volume": {
     "total_liters": 0,
     "observed_liters": 0,
-    "gap_liters": 0
+    "gap_liters": 0,
+    "absence_liters": 0,
+    "outage_liters": 0
   },
+  "gaps": [],
   "daily": [
     {
       "date": "2026-09-13",

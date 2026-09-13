@@ -640,5 +640,111 @@ class ManifestTest(unittest.TestCase):
         self.assertEqual(set(sync.ROOM_LABELS), set(sync.ROOM_SOURCES))
 
 
+
+class BackwardsLatchRegressionTest(unittest.TestCase):
+    """The gate must never be held shut by a single reading.
+
+    This is a real outage, twice over. On 2026-09-12 the hot meter published one
+    reading of 134.966 where the truth was 134.965 -- a single litre, inside the
+    noise of the thousandths wheel -- and rejected the next nine correct readings as
+    "backwards" for five hours. The anchor was widened to a median, which fixed that
+    shape. It did not fix the next one: on 2026-09-13 the cold meter accepted one
+    misread of 186.465 as its FIRST reading and then rejected 29 consecutive readings
+    of 186.195 across nine hours, because a median window only refreshes when
+    something is accepted, and nothing ever was.
+
+    The invariant these tests pin down: readings that corroborate each other beat a
+    lone reading that contradicts them, no matter which came first.
+    """
+
+    def test_single_misread_never_blocks_a_corroborated_run(self) -> None:
+        """The cold meter, 2026-09-13. One bad first reading, 29 good ones after."""
+        rows = [("2026-09-13 00:15:34", 186.465)]
+        for index in range(6):
+            rows.append((f"2026-09-13 0{index + 1}:05:00", 186.195))
+
+        result = sync.clean_readings(frame(rows))
+        values = [r.reading_m3 for r in result.readings]
+
+        self.assertNotIn(186.465, values, "the lone misread must not survive")
+        self.assertEqual(values.count(186.195), 6, "every corroborated reading counts")
+        self.assertEqual(result.readings[-1].reading_m3, 186.195)
+
+    def test_lone_low_reading_without_corroboration_is_still_rejected(self) -> None:
+        """The guard against over-correcting: one dip is noise, not consensus."""
+        rows = [
+            ("2026-09-13 00:00:00", 134.960),
+            ("2026-09-13 00:10:00", 134.965),
+            ("2026-09-13 00:20:00", 134.965),
+            ("2026-09-13 00:30:00", 134.500),  # single misread, 465 L low
+            ("2026-09-13 00:40:00", 134.966),
+            ("2026-09-13 00:50:00", 134.966),
+        ]
+
+        result = sync.clean_readings(frame(rows))
+        values = [r.reading_m3 for r in result.readings]
+
+        self.assertNotIn(134.500, values)
+        self.assertEqual(result.rejected_backwards, 1)
+        self.assertEqual(result.readings[-1].reading_m3, 134.966)
+
+    def test_scattered_low_misreads_do_not_fake_consensus(self) -> None:
+        """Three lows that disagree with each other are noise, not a correction."""
+        rows = [
+            ("2026-09-13 00:00:00", 134.960),
+            ("2026-09-13 00:10:00", 134.965),
+            ("2026-09-13 00:20:00", 134.965),
+            ("2026-09-13 00:30:00", 134.100),
+            ("2026-09-13 00:40:00", 134.500),
+            ("2026-09-13 00:50:00", 134.300),
+        ]
+
+        result = sync.clean_readings(frame(rows))
+        values = [r.reading_m3 for r in result.readings]
+
+        for scattered in (134.100, 134.500, 134.300):
+            self.assertNotIn(scattered, values)
+        self.assertEqual(result.readings[-1].reading_m3, 134.965)
+
+    def test_published_series_never_dips_more_than_the_noise_tolerance(self) -> None:
+        """A dip is allowed -- that is what self-healing costs -- but only a small one.
+
+        The anchor is a median, so an accepted reading can sit below its predecessor.
+        That is deliberate. What must never happen is a dip large enough to be real
+        consumption running backwards, which would mean a misread got published.
+        """
+        rows = [
+            ("2026-09-13 00:00:00", 134.960),
+            ("2026-09-13 00:10:00", 134.965),
+            ("2026-09-13 00:20:00", 134.975),
+            ("2026-09-13 00:30:00", 134.965),
+            ("2026-09-13 00:40:00", 134.970),
+            ("2026-09-13 00:50:00", 134.968),
+        ]
+
+        result = sync.clean_readings(frame(rows))
+        litres = [r.reading_liters for r in result.readings]
+        worst = max(
+            (litres[i - 1] - litres[i] for i in range(1, len(litres))),
+            default=0,
+        )
+
+        ceiling = int(sync.BACKWARDS_TOLERANCE_M3 * 1000) * 2
+        self.assertLessEqual(worst, ceiling, f"queda de {worst} L na serie publicada")
+
+    def test_consensus_requires_the_configured_run_length(self) -> None:
+        """Two agreeing readings are not yet consensus; REANCHOR_AFTER is the gate."""
+        self.assertGreaterEqual(sync.REANCHOR_AFTER, 3)
+
+        rows = [("2026-09-13 00:00:00", 186.465)]
+        for index in range(sync.REANCHOR_AFTER - 1):
+            rows.append((f"2026-09-13 00:{(index + 1) * 10:02d}:00", 186.195))
+
+        result = sync.clean_readings(frame(rows))
+
+        self.assertEqual(len(result.readings), 1, "short run must not re-anchor")
+        self.assertEqual(result.readings[0].reading_m3, 186.465)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

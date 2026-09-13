@@ -131,6 +131,27 @@ ANCHOR_WINDOW = 5
 # the real misreads this guard must catch are 20-320 litres, far outside it.
 BACKWARDS_TOLERANCE_M3 = 0.005
 
+# How many consecutive backwards-rejected readings it takes to overrule the anchor.
+#
+# The median anchor above fixes one bad reading among good ones. It cannot fix a bad
+# reading that blocks every successor, because the window only refreshes when
+# something is ACCEPTED -- and nothing is. On 2026-09-13 the cold meter published a
+# single misread of 186.465 and then rejected 29 consecutive readings of 186.195,
+# every one of them correct, for nine hours. One reading outvoted twenty-nine.
+#
+# So the anchor is not the last word. When this many readings in a row are rejected
+# as backwards AND they agree with each other, they win: independent measurements
+# converging on the same value are evidence, and a lone value contradicting all of
+# them is a misread. The accepted readings sitting above that consensus are dropped,
+# the run is admitted, and the series continues from the truth.
+REANCHOR_AFTER = 3
+
+# How tightly the rejected run must agree with itself to count as consensus, in m3.
+# Wide enough to allow real consumption during the run, tight enough that scattered
+# OCR noise never looks like agreement. Three random misreads landing within 50
+# litres of each other is not something the failure mode produces.
+REANCHOR_SPREAD_M3 = 0.05
+
 # Two consecutive readings closer together in time than this (and still rising) are
 # considered the same continuous draw. Must exceed the camera's capture cadence
 # (~5-10 min) or every single reading becomes its own session.
@@ -349,6 +370,10 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
     rejected_rate = 0
     last_good_m3: float | None = None
     last_good_ts: datetime | None = None
+    # Backwards-rejected readings still waiting to see whether the next ones agree
+    # with them. They are neither accepted nor counted as rejected until that is
+    # settled -- by corroboration (they win) or by a normal acceptance (they lose).
+    pending_backwards: list[tuple[datetime, float]] = []
 
     for timestamp, reading_m3 in zip(working["_ts"], working["_reading"]):
         value = float(reading_m3)
@@ -358,7 +383,28 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
             recent = [r.reading_m3 for r in readings[-ANCHOR_WINDOW:]]
             anchor = statistics.median(recent) if recent else last_good_m3
             if value < anchor - BACKWARDS_TOLERANCE_M3:
-                rejected_backwards += 1
+                pending_backwards.append((moment, value))
+                run = [v for _, v in pending_backwards]
+                if (len(run) >= REANCHOR_AFTER
+                        and max(run) - min(run) <= REANCHOR_SPREAD_M3):
+                    # Consensus beats the anchor. Drop whatever was accepted above
+                    # the agreed level -- that is the misread that latched the gate --
+                    # then admit the whole run and carry on from it.
+                    consensus = statistics.median(run)
+                    while readings and readings[-1].reading_m3 > consensus + BACKWARDS_TOLERANCE_M3:
+                        readings.pop()
+                        rejected_backwards += 1
+                    for pending_ts, pending_value in pending_backwards:
+                        readings.append(
+                            Reading(
+                                timestamp=pending_ts,
+                                reading_m3=round(pending_value, 3),
+                                reading_liters=int(round(pending_value * 1000)),
+                            )
+                        )
+                    last_good_m3 = readings[-1].reading_m3
+                    last_good_ts = readings[-1].timestamp
+                    pending_backwards = []
                 continue
             if value - last_good_m3 > MAX_PLAUSIBLE_JUMP_M3:
                 rejected_jump += 1
@@ -373,6 +419,11 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
                     rejected_rate += 1
                     continue
 
+        # A normal acceptance settles the question: the readings held back before it
+        # never found corroboration, so they were genuine rejections after all.
+        rejected_backwards += len(pending_backwards)
+        pending_backwards = []
+
         last_good_m3 = value
         last_good_ts = moment
         readings.append(
@@ -382,6 +433,9 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
                 reading_liters=int(round(value * 1000)),
             )
         )
+
+    # Whatever is still pending at the end never found corroboration.
+    rejected_backwards += len(pending_backwards)
 
     return CleanResult(
         readings=readings,

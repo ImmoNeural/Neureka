@@ -1,28 +1,36 @@
 {
   "span": {
     "from": "2026-09-13 00:37:04",
-    "to": "2026-09-14 08:36:36",
-    "hours": 32.0
+    "to": "2026-09-14 09:49:33",
+    "hours": 33.2
   },
   "coverage": {
-    "observed_minutes": 1920,
-    "gap_minutes": 0,
+    "observed_minutes": 1871,
+    "gap_minutes": 122,
     "absence_minutes": 0,
-    "outage_minutes": 0,
-    "observed_pct": 100.0,
-    "observed_pct_excl_absence": 100.0,
-    "gap_count": 0,
+    "outage_minutes": 122,
+    "observed_pct": 93.9,
+    "observed_pct_excl_absence": 93.9,
+    "gap_count": 1,
     "absence_count": 0,
-    "outage_count": 0
+    "outage_count": 1
   },
   "volume": {
-    "total_liters": 448,
-    "observed_liters": 448,
-    "gap_liters": 0,
+    "total_liters": 239,
+    "observed_liters": 232,
+    "gap_liters": 7,
     "absence_liters": 0,
-    "outage_liters": 0
+    "outage_liters": 7
   },
-  "gaps": [],
+  "gaps": [
+    {
+      "from": "2026-09-14 06:45:37",
+      "to": "2026-09-14 08:47:30",
+      "hours": 2.0,
+      "liters": 7,
+      "kind": "outage"
+    }
+  ],
   "daily": [
     {
       "date": "2026-09-13",
@@ -32,9 +40,9 @@
     },
     {
       "date": "2026-09-14",
-      "liters": 233,
-      "gap_liters": 0,
-      "observed_pct": 100.0
+      "liters": 24,
+      "gap_liters": 7,
+      "observed_pct": 79.3
     }
   ],
   "hourly": [
@@ -58,15 +66,15 @@
     },
     {
       "hour": 3,
-      "liters": 51,
-      "observed_minutes": 120,
-      "liters_per_observed_hour": 25.32
-    },
-    {
-      "hour": 4,
       "liters": 0,
       "observed_minutes": 120,
       "liters_per_observed_hour": 0.0
+    },
+    {
+      "hour": 4,
+      "liters": 1,
+      "observed_minutes": 120,
+      "liters_per_observed_hour": 0.7
     },
     {
       "hour": 5,
@@ -76,27 +84,27 @@
     },
     {
       "hour": 6,
-      "liters": 238,
-      "observed_minutes": 120,
-      "liters_per_observed_hour": 118.89
+      "liters": 6,
+      "observed_minutes": 106,
+      "liters_per_observed_hour": 3.29
     },
     {
       "hour": 7,
       "liters": 0,
-      "observed_minutes": 120,
+      "observed_minutes": 60,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 8,
       "liters": 0,
-      "observed_minutes": 97,
+      "observed_minutes": 72,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 9,
-      "liters": 5,
-      "observed_minutes": 60,
-      "liters_per_observed_hour": 5.2
+      "liters": 21,
+      "observed_minutes": 110,
+      "liters_per_observed_hour": 11.61
     },
     {
       "hour": 10,

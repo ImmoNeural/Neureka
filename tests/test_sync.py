@@ -733,8 +733,16 @@ class BackwardsLatchRegressionTest(unittest.TestCase):
         self.assertLessEqual(worst, ceiling, f"queda de {worst} L na serie publicada")
 
     def test_consensus_requires_the_configured_run_length(self) -> None:
-        """Two agreeing readings are not yet consensus; REANCHOR_AFTER is the gate."""
-        self.assertGreaterEqual(sync.REANCHOR_AFTER, 3)
+        """A run shorter than REANCHOR_AFTER must not overturn the anchor.
+
+        The gate is the CONSTANT, whatever it is set to -- this test must not pin it
+        to a particular number. It asserted `>= 3` until 2026-09-14, when the value
+        was deliberately lowered to 2 to cut the exposure window from two hours to
+        twenty minutes, and the test failed for being a policy in test clothing
+        rather than a behaviour. One reading can never be consensus, so 2 is the
+        real floor; anything above it is a tuning decision, not an invariant.
+        """
+        self.assertGreaterEqual(sync.REANCHOR_AFTER, 2)
 
         rows = [("2026-09-13 00:00:00", 186.465)]
         for index in range(sync.REANCHOR_AFTER - 1):

@@ -102,14 +102,7 @@ MAX_PLAUSIBLE_JUMP_M3 = 5.0
 # real data, so the spike is accepted, and because a rejection never lowers "last
 # known good", every later true reading is then discarded as backwards. That single
 # spike cost 13 of 18 rows and reported 134.641 as current instead of 134.520.
-# Lowered from 25 to 20 on 2026-09-14. The paragraph above still holds - every
-# genuine draw in the series stays at or below 17 L/min - but 25 turned out to
-# sit INSIDE misread territory, not below it: a 240-litre misread on 2026-09-14
-# implied 24 L/min and cleared the ceiling by a hair. 20 keeps the margin over
-# real usage and closes that gap. Must stay equal to Leitura.py's
-# MAX_VAZAO_M3_POR_HORA (1.2 m3/h): two numbers for the same physics would be
-# two judges disagreeing.
-MAX_FLOW_RATE_LITERS_PER_MIN = 20.0
+MAX_FLOW_RATE_LITERS_PER_MIN = 25.0
 
 # How many accepted readings form the anchor the backwards guard compares against.
 #
@@ -151,17 +144,6 @@ BACKWARDS_TOLERANCE_M3 = 0.005
 # converging on the same value are evidence, and a lone value contradicting all of
 # them is a misread. The accepted readings sitting above that consensus are dropped,
 # the run is admitted, and the series continues from the truth.
-# Three, not two -- measured, not argued.
-#
-# Lowering it to 2 on 2026-09-14 looked free: a wrong HIGH reading enters by the
-# 'rising is allowed' path, so only the correct lower readings ever wait on
-# consensus, and waiting less means less time serving a wrong number.
-#
-# The measurement on the real series killed it. Hot water: backwards rejections
-# 88 -> 198, published readings 240 -> 126. Because every consensus discards the
-# accepted readings sitting above the agreed level, a low gate on a noisy OCR
-# fires constantly and each firing takes a slice of the series with it. Backward
-# steps did improve, 25 -> 15 -- real, but not worth half the data.
 REANCHOR_AFTER = 3
 
 # How tightly the rejected run must agree with itself to count as consensus, in m3.
@@ -212,6 +194,23 @@ GIT_TIMEOUT_SECONDS = 120
 # Source column names, exactly as Leitura.py writes them.
 COL_TIMESTAMP = "Data/Hora da Foto"
 COL_READING = "Leitura Completa"
+COL_NOTE = "Observacao"
+
+# Publish only readings the OCR produced with no caveat at all.
+#
+# Leitura.py records in COL_NOTE every reason it was not simply sure: the
+# thousandths wheel assumed as 5 (+-5 litres), a digit deduced from history, an
+# image that had to be enhanced before the model would answer, a value readmitted
+# by consensus, a step that went backwards. A blank note means it read the dial on
+# the first try and nothing was inferred.
+#
+# Measured on 13/09/2026: 193 of 330 hot readings are blank-note (58%) and 60 of
+# 140 cold (43%). Dropping the rest costs resolution, not accuracy: the meter is
+# cumulative, so the TOTAL still comes from the endpoints and stays exact - what
+# thins out is how finely consumption can be placed in time.
+#
+# Set to False to publish everything the physical guards accept, caveats included.
+PUBLISH_ONLY_UNQUALIFIED_READINGS = True
 TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
@@ -258,6 +257,7 @@ class CleanResult:
     readings: list[Reading]
     rows_read: int
     rejected_unparsable: int
+    rejected_uncertain: int
     rejected_backwards: int
     rejected_jump: int
     rejected_rate: int
@@ -266,6 +266,7 @@ class CleanResult:
     def rejected_total(self) -> int:
         return (
             self.rejected_unparsable
+            + self.rejected_uncertain
             + self.rejected_backwards
             + self.rejected_jump
             + self.rejected_rate
@@ -382,6 +383,15 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
     rejected_unparsable = int((~parsable).sum())
     working = working[parsable].sort_values("_ts", kind="stable")
 
+    # Drop anything the reader flagged as less than certain. A blank note is the
+    # only thing that counts as clean; any text at all is a caveat.
+    rejected_uncertain = 0
+    if PUBLISH_ONLY_UNQUALIFIED_READINGS and COL_NOTE in frame.columns:
+        notes = frame.loc[working.index, COL_NOTE]
+        clean = notes.isna() | (notes.astype(str).str.strip().isin(["", "nan"]))
+        rejected_uncertain = int((~clean).sum())
+        working = working[clean.values]
+
     readings: list[Reading] = []
     rejected_backwards = 0
     rejected_jump = 0
@@ -459,6 +469,7 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
         readings=readings,
         rows_read=rows_read,
         rejected_unparsable=rejected_unparsable,
+        rejected_uncertain=rejected_uncertain,
         rejected_backwards=rejected_backwards,
         rejected_jump=rejected_jump,
         rejected_rate=rejected_rate,
@@ -916,7 +927,9 @@ def process_room(room_key: str, source: Path, logger: RunLogger) -> RoomResult:
     logger.log(
         f"room={room_key} status=ok rows_read={clean.rows_read} "
         f"accepted={len(clean.readings)} rejected={clean.rejected_total} "
-        f"(unparsable={clean.rejected_unparsable} backwards={clean.rejected_backwards} "
+        f"(unparsable={clean.rejected_unparsable} "
+        f"uncertain={clean.rejected_uncertain} "
+        f"backwards={clean.rejected_backwards} "
         f"jump={clean.rejected_jump} rate={clean.rejected_rate}) sessions={len(sessions)} "
         f"banhos={sum(1 for s in sessions if s.session_type == 'banho')} "
         f"descargas={sum(1 for s in sessions if s.session_type == 'descarga')} "

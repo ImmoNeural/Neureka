@@ -10,10 +10,10 @@
   },
   {
     "date": "2026-09-14",
-    "session_count": 10,
+    "session_count": 11,
     "banho_count": 0,
     "descarga_count": 5,
-    "total_liters": 1041,
+    "total_liters": 1071,
     "avg_liters_per_banho": 0.0,
     "avg_liters_per_descarga": 5.2
   }

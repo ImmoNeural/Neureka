@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-16T16:00:02.326899+02:00",
+  "generated_at": "2026-09-16T17:00:03.333187+02:00",
   "rooms": [
     {
       "room_key": "banheiro_quente",
@@ -7,8 +7,8 @@
       "temperature": "quente",
       "has_data": true,
       "last_reading": 135.195,
-      "last_reading_at": "2026-09-16 15:19:13",
-      "last_sync": "2026-09-16T16:00:02.326899+02:00",
+      "last_reading_at": "2026-09-16 16:01:26",
+      "last_sync": "2026-09-16T17:00:03.333187+02:00",
       "available_months": [
         "2026-08",
         "2026-09",
@@ -20,9 +20,9 @@
       "label": "Banheiro - Fria",
       "temperature": "fria",
       "has_data": true,
-      "last_reading": 186.885,
-      "last_reading_at": "2026-09-16 14:59:11",
-      "last_sync": "2026-09-16T16:00:02.326899+02:00",
+      "last_reading": 186.887,
+      "last_reading_at": "2026-09-16 16:04:48",
+      "last_sync": "2026-09-16T17:00:03.333187+02:00",
       "available_months": [
         "2026-09",
         "analysis"
@@ -32,11 +32,14 @@
       "room_key": "cozinha_quente",
       "label": "Cozinha - Quente",
       "temperature": "quente",
-      "has_data": false,
-      "last_reading": null,
-      "last_reading_at": null,
-      "last_sync": "2026-09-16T16:00:02.326899+02:00",
-      "available_months": []
+      "has_data": true,
+      "last_reading": 25.095,
+      "last_reading_at": "2026-09-16 16:13:04",
+      "last_sync": "2026-09-16T17:00:03.333187+02:00",
+      "available_months": [
+        "2026-09",
+        "analysis"
+      ]
     },
     {
       "room_key": "cozinha_fria",
@@ -45,7 +48,7 @@
       "has_data": false,
       "last_reading": null,
       "last_reading_at": null,
-      "last_sync": "2026-09-16T16:00:02.326899+02:00",
+      "last_sync": "2026-09-16T17:00:03.333187+02:00",
       "available_months": []
     },
     {
@@ -55,7 +58,7 @@
       "has_data": false,
       "last_reading": null,
       "last_reading_at": null,
-      "last_sync": "2026-09-16T16:00:02.326899+02:00",
+      "last_sync": "2026-09-16T17:00:03.333187+02:00",
       "available_months": []
     }
   ]

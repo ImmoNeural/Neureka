@@ -235,8 +235,16 @@ code {
 .badge--empty  { color: var(--text-faint); background: var(--bg-raised); border-color: var(--border); }
 
 /* Current-reading tile */
-.tile {
+/* Leitura atual e consumo do periodo, lado a lado e com o mesmo peso. */
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   margin: 16px 20px 0;
+}
+
+.tile {
+  margin: 0;
   padding: 14px 16px;
   border-radius: var(--radius-sm);
   background: var(--bg-raised);
@@ -257,7 +265,12 @@ code {
 .card[data-temp="quente"] .tile__value { color: var(--hot); }
 .card[data-temp="fria"]   .tile__value { color: var(--cold); }
 .tile__unit  { font-size: .95rem; color: var(--text-muted); }
-.tile__label { margin-left: auto; font-size: .72rem; color: var(--text-faint); text-align: right; }
+.tile__label {
+  flex-basis: 100%;
+  margin-top: 5px;
+  font-size: .72rem;
+  color: var(--text-faint);
+}
 
 .chart-wrap {
   position: relative;
@@ -693,3 +706,9 @@ code {
 
 .card--waiting .card__title { color: var(--text-muted); }
 .card--waiting .stat__value { color: var(--text-faint); }
+
+/* Em tela estreita os dois blocos empilham: lado a lado, o numero de seis
+   digitos da leitura encolheria a ponto de nao se ler. */
+@media (max-width: 430px) {
+  .tiles { grid-template-columns: 1fr; }
+}

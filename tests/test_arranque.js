@@ -166,6 +166,29 @@ setTimeout(() => {
     `${porId.get('span-grid').children.length} botoes`);
   check('desenhou os cards dos medidores',
     porId.get('meter-grid').children.length === st.meters.length + st.emptyRooms.length);
+  /*
+   * O card do medidor mostra DOIS numeros de relance: a leitura do relogio e
+   * quanto passou no periodo. O segundo foi pedido depois - ate entao os litros
+   * do dia so existiam dentro do grafico, e quem queria o numero tinha que
+   * interpretar barras.
+   */
+  const cardMedidor = porId.get('meter-grid').children
+    .find((c) => (c.textContent || '').includes('leitura atual'));
+
+  check('o card do medidor tem leitura atual E consumo do periodo', (() => {
+    if (!cardMedidor) return false;
+    const t = cardMedidor.textContent;
+    // O stub cola os textos sem separador ("41Ldia 16/09"), entao nao ha
+    // fronteira de palavra depois do L - a checagem e digito colado na unidade.
+    return t.includes('leitura atual') && /\d\s*m³/.test(t) && /\d\s*L/.test(t);
+  })(), cardMedidor ? cardMedidor.textContent.slice(0, 90) : 'nao achou card');
+
+  check('o rotulo do consumo diz o periodo escolhido', (() => {
+    if (!cardMedidor) return false;
+    const curto = vm.runInContext('selectionShort', sandbox)();
+    return cardMedidor.textContent.includes(curto);
+  })(), vm.runInContext('selectionShort', sandbox)());
+
   check('desenhou a previsao', porId.get('forecast-grid').children.length > 0);
   check('desenhou as analises', porId.get('analysis-grid').children.length > 0);
 

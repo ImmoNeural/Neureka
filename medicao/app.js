@@ -491,6 +491,21 @@ function defaultSelectionFor(monthKey) {
   return { type: 'month' };
 }
 
+/**
+ * A versao curta da selecao, para o rotulo do bloco de consumo.
+ *
+ * O rotulo fica num canto de poucos pixels, e "semana 1 (1-7/09)" quebra em
+ * duas linhas e empurra o numero. Aqui basta dizer QUAL periodo - o intervalo
+ * exato ja esta no seletor logo acima e no eixo do grafico logo abaixo.
+ */
+function selectionShort() {
+  const sel = state.selection;
+  const [, mes] = state.month.split('-');
+  if (sel.type === 'day') return `dia ${String(sel.day).padStart(2, '0')}/${mes}`;
+  if (sel.type === 'week') return `semana ${sel.week}`;
+  return 'no mês';
+}
+
 function selectionLabel() {
   const sel = state.selection;
   const [year, month] = state.month.split('-');
@@ -633,17 +648,30 @@ function meterCard(meter) {
   head.append(el('span', `badge badge--${room.temperature}`, room.temperature));
   card.append(head);
 
-  const tile = el('div', 'tile');
-  tile.append(el('span', 'tile__value', Number(room.last_reading).toFixed(3)));
-  tile.append(el('span', 'tile__unit', 'm³'));
-  tile.append(el('span', 'tile__label', 'leitura atual'));
-  card.append(tile);
+  /* ---- os dois numeros que se le de relance ----
+
+     Leitura atual e o que esta no relogio; consumo e o que passou no periodo
+     escolhido. Sao grandezas diferentes e por isso ficam lado a lado com o
+     mesmo peso: o primeiro e um marco, o segundo e a resposta para "gastei
+     quanto hoje", que era o que faltava aparecer sem ter que ler o grafico. */
 
   const liters = litersInSelection(meter);
-  const consumo = el('p', 'card__period');
-  consumo.append(el('strong', null, `${formatLiters(liters)} L`));
-  consumo.append(document.createTextNode(` em ${selectionLabel()}`));
-  card.append(consumo);
+
+  const tiles = el('div', 'tiles');
+
+  const atual = el('div', 'tile');
+  atual.append(el('span', 'tile__value', Number(room.last_reading).toFixed(3)));
+  atual.append(el('span', 'tile__unit', 'm³'));
+  atual.append(el('span', 'tile__label', 'leitura atual'));
+  tiles.append(atual);
+
+  const gasto = el('div', 'tile');
+  gasto.append(el('span', 'tile__value', formatLiters(liters)));
+  gasto.append(el('span', 'tile__unit', 'L'));
+  gasto.append(el('span', 'tile__label', selectionShort()));
+  tiles.append(gasto);
+
+  card.append(tiles);
 
   if (!chartsAvailable) {
     card.append(el('p', 'card__note', 'Gráfico indisponível: a biblioteca Chart.js não carregou.'));

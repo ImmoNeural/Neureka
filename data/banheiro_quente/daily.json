@@ -34,5 +34,14 @@
     "total_liters": 54,
     "avg_liters_per_banho": 27.0,
     "avg_liters_per_descarga": 0.0
+  },
+  {
+    "date": "2026-09-16",
+    "session_count": 1,
+    "banho_count": 0,
+    "descarga_count": 0,
+    "total_liters": 1,
+    "avg_liters_per_banho": 0.0,
+    "avg_liters_per_descarga": 0.0
   }
 ]

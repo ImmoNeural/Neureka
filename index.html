@@ -3,129 +3,150 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Neureka · Monitor de Água</title>
-  <meta name="description" content="Monitoramento de consumo de água por cômodo, lido por câmera e OCR.">
+  <title>Neureka</title>
   <meta name="color-scheme" content="dark">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="style.css">
+  <meta name="robots" content="noindex">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
+  <style>
+    /* Página de entrada. Deliberadamente autocontida: nenhum CSS ou JS externo,
+       para que ela continue de pé mesmo se o painel abaixo dela quebrar. */
+    :root {
+      --bg: #070a0f;
+      --surface: #121a24;
+      --border: #1f2b3a;
+      --border-hi: #2b3a4d;
+      --text: #e8eef6;
+      --text-muted: #8ea0b5;
+      --text-faint: #5d6f85;
+      --cold: #38bdf8;
+      --font: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui,
+              -apple-system, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { background: var(--bg); -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px 20px;
+      font-family: var(--font);
+      color: var(--text);
+    }
+
+    /* O brilho de fundo, no mesmo tom do painel, para as duas páginas
+       parecerem a mesma casa. */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -30% 0 auto 50%;
+      width: 900px;
+      height: 620px;
+      transform: translateX(-50%);
+      background: radial-gradient(closest-side, rgba(56, 189, 248, .16), transparent 70%);
+      filter: blur(20px);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    main { width: 100%; max-width: 460px; text-align: center; }
+
+    .mark {
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 22px;
+      color: var(--cold);
+    }
+
+    .mark svg { width: 100%; height: 100%; display: block; }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 8vw, 40px);
+      font-weight: 650;
+      letter-spacing: -.02em;
+    }
+
+    .tagline {
+      margin: 0 0 34px;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .links { display: grid; gap: 10px; }
+
+    .link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 15px 18px;
+      text-align: left;
+      text-decoration: none;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: border-color .15s ease, transform .15s ease;
+    }
+
+    .link:hover { border-color: var(--border-hi); transform: translateY(-1px); }
+
+    .link:focus-visible {
+      outline: none;
+      border-color: var(--cold);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, .14);
+    }
+
+    .link__name { font-weight: 600; font-size: 15px; }
+    .link__desc { margin-top: 3px; font-size: 12.5px; color: var(--text-faint); }
+    .link__arrow { flex: none; width: 18px; height: 18px; color: var(--text-faint); }
+    .link__arrow svg { width: 100%; height: 100%; display: block; }
+
+    footer {
+      margin-top: 34px;
+      font-size: 12px;
+      color: var(--text-faint);
+    }
+
+    @media (max-width: 420px) {
+      .link { padding: 13px 15px; }
+    }
+  </style>
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"></div>
-
-  <header class="masthead">
-    <div class="shell masthead__inner">
-      <div class="brand">
-        <span class="brand__mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-               stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2.7c3.4 4.2 6 7.6 6 10.7a6 6 0 0 1-12 0c0-3.1 2.6-6.5 6-10.7Z"/>
-          </svg>
-        </span>
-        <span class="brand__text">
-          <strong>Neureka</strong>
-          <span>Monitor de Água</span>
-        </span>
-      </div>
-
-      <div class="sync" id="sync-banner" data-state="loading">
-        <span class="sync__dot" aria-hidden="true"></span>
-        <span class="sync__label">Última atualização</span>
-        <span class="sync__value" id="sync-value">carregando…</span>
-      </div>
+  <main>
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2.7c3.4 4.2 6 7.6 6 10.7a6 6 0 0 1-12 0c0-3.1 2.6-6.5 6-10.7Z"/>
+      </svg>
     </div>
-  </header>
 
-  <main class="shell">
-    <p class="alert" id="global-alert" role="alert" hidden></p>
+    <h1>Neureka</h1>
+    <p class="tagline">
+      Sensores próprios, leitura automática e os números do consumo
+      onde dá para olhar sem procurar.
+    </p>
 
-    <!-- ===================================================== seletor de periodo
-         O mes escolhido aqui manda em tudo que vem abaixo: os graficos dos
-         medidores, os subtotais por semana e a previsao do mes. -->
-    <section class="section" aria-labelledby="period-title">
-      <div class="section__head">
-        <h2 class="section__title" id="period-title">Período</h2>
-        <p class="section__sub">
-          Escolha o mês e clique num dia, numa semana ou no mês inteiro.
-          Os gráficos abaixo seguem essa escolha.
-        </p>
-      </div>
+    <div class="links">
+      <a class="link" href="/medicao/">
+        <span>
+          <span class="link__name">Medição de água</span>
+          <span class="link__desc">Hidrômetros lidos por câmera, cômodo a cômodo</span>
+        </span>
+        <span class="link__arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+        </span>
+      </a>
+    </div>
 
-      <div class="period">
-        <div class="period__row period__row--month">
-          <label class="period__label" for="month-select">Mês</label>
-          <div class="select">
-            <select id="month-select" aria-label="Mês a exibir"></select>
-            <span class="select__arrow" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </span>
-          </div>
-        </div>
-
-        <div class="period__row">
-          <span class="period__label">Dia</span>
-          <div class="chips chips--days" id="day-grid" role="group" aria-label="Dias do mês"></div>
-        </div>
-
-        <div class="period__row">
-          <span class="period__label">Semana</span>
-          <div class="chips chips--spans" id="span-grid" role="group" aria-label="Semanas e mês inteiro"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="meters-title">
-      <div class="section__head">
-        <h2 class="section__title" id="meters-title">Medidores</h2>
-        <p class="section__sub">
-          Leitura acumulada de cada hidrômetro e o consumo do período escolhido acima.
-        </p>
-      </div>
-      <div class="grid" id="meter-grid">
-        <p class="muted" id="meters-loading">Carregando medidores…</p>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="forecast-title">
-      <div class="section__head">
-        <h2 class="section__title" id="forecast-title">Previsão do mês</h2>
-        <p class="section__sub">
-          Projeção do consumo até o fim do mês, por cômodo e no total.
-          Extrapolação linear do que já foi medido — vale mais quanto mais dias o mês tiver corrido.
-        </p>
-      </div>
-      <div class="grid grid--wide" id="forecast-grid">
-        <p class="muted" id="forecast-loading">Carregando previsão…</p>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="analysis-title">
-      <div class="section__head">
-        <h2 class="section__title" id="analysis-title">Análises</h2>
-        <p class="section__sub">
-          Subtotais por semana do mês e perfil por hora do dia, quente e fria, em cada cômodo.
-          O hidrômetro é acumulado: o volume é exato mesmo com foto a cada 10 min.
-        </p>
-      </div>
-      <div class="grid grid--wide" id="analysis-grid">
-        <p class="muted" id="analysis-loading">Carregando análises…</p>
-      </div>
-    </section>
+    <footer>Acesso restrito.</footer>
   </main>
-
-  <footer class="footer">
-    <div class="shell">
-      <p>
-        Leituras capturadas por câmera + OCR a cada 5–10 min. Sessões são inferidas por heurística —
-        consulte o <code>README.md</code> para as limitações conhecidas.
-      </p>
-    </div>
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
-          integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
-          crossorigin="anonymous"></script>
-  <script src="app.js"></script>
 </body>
 </html>

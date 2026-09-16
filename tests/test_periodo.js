@@ -22,6 +22,9 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
+// O site publicado mora em /medicao - a raiz do repositorio e o webroot,
+// entao o caminho do arquivo aqui e o caminho dele na URL.
+const WEB = path.join(ROOT, 'medicao');
 
 /* ------------------------------------------------ carrega o app.js de verdade */
 
@@ -35,9 +38,11 @@ const sandbox = {
 };
 
 vm.createContext(sandbox);
-vm.runInContext(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'), sandbox);
+vm.runInContext(fs.readFileSync(path.join(WEB, 'app.js'), 'utf8'), sandbox);
 
-const { weeksOf, daysInMonth, isoOf, litersOfDay, hoursOfDay } = sandbox;
+const {
+  weeksOf, daysInMonth, isoOf, litersOfDay, hoursOfDay, readingsOfDay
+} = sandbox;
 
 /* ------------------------------------------------------------------ harness */
 
@@ -56,7 +61,7 @@ function check(name, condition, detail) {
 
 /** Monta um "meter" igual ao que o init() monta, a partir do analysis.json. */
 function meterFrom(roomKey) {
-  const file = path.join(ROOT, 'data', roomKey, 'analysis.json');
+  const file = path.join(WEB, 'data', roomKey, 'analysis.json');
   if (!fs.existsSync(file)) return null;
   const analysis = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!Array.isArray(analysis.daily)) return null;
@@ -121,6 +126,86 @@ check('o carry preserva a soma do dia', (() => {
   const soma = hoursOfDay(m, '2026-09-01').reduce((a, b) => a + b, 0);
   return soma === bruto.reduce((a, b) => a + b, 0);
 })());
+
+/* ------------------------------------------------ leituras de um dia so */
+
+console.log('\nreadingsOfDay');
+
+check('medidor sem pontos devolve lista vazia',
+  readingsOfDay({}, '2026-09-16').length === 0);
+
+check('filtra pelo dia local, nao por UTC', (() => {
+  // 23:30 local de 15/09 vira 16/09 em UTC quando o fuso e negativo, e vira
+  // 15/09 ainda em UTC quando e positivo. O filtro tem que olhar o dia LOCAL
+  // nos dois casos, senao a ultima hora de cada dia migra para o dia seguinte.
+  const m = { points: [
+    { at: new Date(2026, 8, 15, 23, 30), reading: 100.000 },
+    { at: new Date(2026, 8, 16, 0, 10), reading: 100.005 },
+    { at: new Date(2026, 8, 16, 23, 50), reading: 100.010 }
+  ] };
+  return readingsOfDay(m, '2026-09-15').length === 1
+    && readingsOfDay(m, '2026-09-16').length === 2;
+})());
+
+check('preserva a ordem cronologica', (() => {
+  const m = { points: [
+    { at: new Date(2026, 8, 16, 1, 0), reading: 1 },
+    { at: new Date(2026, 8, 16, 7, 0), reading: 2 },
+    { at: new Date(2026, 8, 16, 9, 0), reading: 3 }
+  ] };
+  const r = readingsOfDay(m, '2026-09-16');
+  return r[0].at < r[1].at && r[1].at < r[2].at;
+})());
+
+/* ------------------------------------------------------ janela da previsao */
+
+console.log('\nforecastWindow / formatM3');
+
+/** Medidor de mentira com leitura nos dias listados. */
+function medidorComDias(dias) {
+  const points = [];
+  for (const dia of dias) {
+    points.push({ at: new Date(2026, 8, dia, 9, 0), reading: 100 + dia * 0.05 });
+    points.push({ at: new Date(2026, 8, dia, 18, 0), reading: 100 + dia * 0.05 + 0.02 });
+  }
+  return { points, daily: new Map(), hourlyByDay: {} };
+}
+
+const { forecastWindow, formatM3 } = sandbox;
+
+check('tres dias seguidos nao bastam',
+  forecastWindow([medidorComDias([10, 11, 12])], '2026-09') === null);
+
+check('quatro dias seguidos bastam', (() => {
+  const w = forecastWindow([medidorComDias([10, 11, 12, 13])], '2026-09');
+  return w && w.from === 10 && w.to === 13;
+})());
+
+check('quatro dias soltos nao bastam',
+  forecastWindow([medidorComDias([1, 5, 9, 20])], '2026-09') === null);
+
+check('pega a janela MAIS RECENTE quando ha duas', (() => {
+  const w = forecastWindow([medidorComDias([1, 2, 3, 4, 20, 21, 22, 23])], '2026-09');
+  return w && w.from === 20 && w.to === 23;
+})());
+
+check('a lacuna no meio e pulada', (() => {
+  // Igual a serie real da agua quente: 1-3, buraco, 11-16.
+  const w = forecastWindow([medidorComDias([1, 2, 3, 11, 12, 13, 14, 15, 16])], '2026-09');
+  return w && w.from === 13 && w.to === 16;
+})());
+
+check('exige os quatro dias em TODOS os medidores do card', (() => {
+  const completo = medidorComDias([10, 11, 12, 13]);
+  const furado = medidorComDias([10, 11, 13]);   // falta o 12
+  return forecastWindow([completo], '2026-09') !== null
+    && forecastWindow([completo, furado], '2026-09') === null;
+})());
+
+check('sem medidor nenhum nao ha janela', forecastWindow([], '2026-09') === null);
+
+check('formatM3 usa tres casas e virgula', formatM3(4822) === '4,822');
+check('formatM3 devolve null para valor invalido', formatM3(null) === null);
 
 /* --------------------------------------------- contra os dados de verdade */
 

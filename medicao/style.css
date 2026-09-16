@@ -643,3 +643,53 @@ code {
   .select { max-width: none; }
   .chip { min-width: 31px; height: 31px; font-size: 12px; }
 }
+
+/* ==========================================================================
+   Leitura escolhida na escadinha
+
+   Comeca como instrucao em cinza e vira o dado do ponto clicado. Espaco
+   reservado desde o inicio com min-height: sem isso o card inteiro pula para
+   baixo no primeiro clique.
+   ========================================================================== */
+
+.card__pick {
+  margin: 0;
+  padding: 9px 17px 0;
+  min-height: 34px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.card__pick--on { color: var(--text-muted); }
+
+.card__pick strong {
+  font-family: var(--font-num);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.card__pick--flow { color: var(--ok); font-weight: 600; }
+
+/* O cursor avisa que os degraus respondem ao clique. */
+.card .chart-wrap canvas { cursor: pointer; }
+
+/* Degrau que atravessa uma lacuna: o numero e real, mas nao e um evento so. */
+.card__pick--gap { color: var(--warn); }
+
+/* ==========================================================================
+   Bloco de analise reservado
+
+   Comodo cujo medidor ainda nao foi instalado. Fica visivel de proposito - o
+   que some da tela some da cabeca de quem olha - mas discreto, para nao
+   competir com os comodos que ja medem.
+   ========================================================================== */
+
+.card--waiting {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+}
+
+.card--waiting .card__title { color: var(--text-muted); }
+.card--waiting .stat__value { color: var(--text-faint); }

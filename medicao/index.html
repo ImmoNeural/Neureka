@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Neureka · Monitor de Água</title>
+  <meta name="description" content="Monitoramento de consumo de água por cômodo, lido por câmera e OCR.">
+  <meta name="color-scheme" content="dark">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="shell masthead__inner">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.7c3.4 4.2 6 7.6 6 10.7a6 6 0 0 1-12 0c0-3.1 2.6-6.5 6-10.7Z"/>
+          </svg>
+        </span>
+        <span class="brand__text">
+          <strong>Neureka</strong>
+          <span>Monitor de Água</span>
+        </span>
+      </div>
+
+      <div class="sync" id="sync-banner" data-state="loading">
+        <span class="sync__dot" aria-hidden="true"></span>
+        <span class="sync__label">Última atualização</span>
+        <span class="sync__value" id="sync-value">carregando…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <p class="alert" id="global-alert" role="alert" hidden></p>
+
+    <!-- ===================================================== seletor de periodo
+         O mes escolhido aqui manda em tudo que vem abaixo: os graficos dos
+         medidores, os subtotais por semana e a previsao do mes. -->
+    <section class="section" aria-labelledby="period-title">
+      <div class="section__head">
+        <h2 class="section__title" id="period-title">Período</h2>
+        <p class="section__sub">
+          Escolha o mês e clique num dia, numa semana ou no mês inteiro.
+          Os gráficos abaixo seguem essa escolha.
+        </p>
+      </div>
+
+      <div class="period">
+        <div class="period__row period__row--month">
+          <label class="period__label" for="month-select">Mês</label>
+          <div class="select">
+            <select id="month-select" aria-label="Mês a exibir"></select>
+            <span class="select__arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="period__row">
+          <span class="period__label">Dia</span>
+          <div class="chips chips--days" id="day-grid" role="group" aria-label="Dias do mês"></div>
+        </div>
+
+        <div class="period__row">
+          <span class="period__label">Semana</span>
+          <div class="chips chips--spans" id="span-grid" role="group" aria-label="Semanas e mês inteiro"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="meters-title">
+      <div class="section__head">
+        <h2 class="section__title" id="meters-title">Medidores</h2>
+        <p class="section__sub">
+          Leitura acumulada de cada hidrômetro e o consumo do período escolhido acima.
+        </p>
+      </div>
+      <div class="grid" id="meter-grid">
+        <p class="muted" id="meters-loading">Carregando medidores…</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="forecast-title">
+      <div class="section__head">
+        <h2 class="section__title" id="forecast-title">Previsão do mês</h2>
+        <p class="section__sub">
+          Projeção do consumo até o fim do mês, em metros cúbicos, por cômodo e no total.
+          A base são quatro dias seguidos de leitura; sem esses quatro dias, não há projeção.
+        </p>
+      </div>
+      <div class="grid grid--wide" id="forecast-grid">
+        <p class="muted" id="forecast-loading">Carregando previsão…</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="analysis-title">
+      <div class="section__head">
+        <h2 class="section__title" id="analysis-title">Análises</h2>
+        <p class="section__sub">
+          Subtotais por semana do mês e perfil por hora do dia, quente e fria, em cada cômodo.
+          O hidrômetro é acumulado: o volume é exato mesmo com foto a cada 10 min.
+        </p>
+      </div>
+      <div class="grid grid--wide" id="analysis-grid">
+        <p class="muted" id="analysis-loading">Carregando análises…</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">
+      <p>
+        Leituras capturadas por câmera + OCR a cada 5–10 min. Sessões são inferidas por heurística —
+        consulte o <code>README.md</code> para as limitações conhecidas.
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+          integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+          crossorigin="anonymous"></script>
+  <script src="app.js"></script>
+</body>
+</html>

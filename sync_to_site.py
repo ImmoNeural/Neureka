@@ -44,7 +44,15 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 
 SITE_ROOT = Path(__file__).resolve().parent
-DATA_ROOT = SITE_ROOT / "data"
+
+# The meter dashboard lives under /medicao, not at the domain root.
+#
+# The webroot on the host IS this repository, so a file's path here is its URL
+# there. Keeping the dashboard in its own folder means neureka-ai.com/ is free
+# for the landing page, and -- the reason it was done -- Cloudflare Access can
+# be pointed at exactly one path instead of the whole domain.
+PUBLIC_ROOT = SITE_ROOT / "medicao"
+DATA_ROOT = PUBLIC_ROOT / "data"
 LOG_PATH = SITE_ROOT / "sync_log.txt"
 
 # Root of the existing (live, do-not-touch) camera pipeline.

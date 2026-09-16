@@ -492,3 +492,154 @@ code {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ==========================================================================
+   Seletor de periodo
+
+   O mes vem de um <select> estilizado; o dia e a semana vem de "quadradinhos".
+   Botoes de verdade, nao divs: teclado e leitor de tela funcionam de graca, e
+   aria-pressed carrega o estado ligado/desligado.
+   ========================================================================== */
+
+.period {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.period__row {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  align-items: start;
+  gap: 12px;
+}
+
+.period__label {
+  margin-top: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ---- o listbox do mes ---- */
+
+.select { position: relative; max-width: 260px; }
+
+.select select {
+  width: 100%;
+  appearance: none;
+  padding: 9px 38px 9px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  background: linear-gradient(180deg, var(--surface-hi), var(--bg-raised));
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.select select:hover { border-color: #3a4d64; }
+
+.select select:focus-visible {
+  outline: none;
+  border-color: var(--cold);
+  box-shadow: 0 0 0 3px var(--cold-soft);
+}
+
+/* The arrow is decorative, so it must never swallow the click that belongs
+   to the select underneath it. */
+.select__arrow {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.select__arrow svg { width: 100%; height: 100%; display: block; }
+
+/* ---- os quadradinhos ---- */
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.chip {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color .12s ease, border-color .12s ease,
+              background .12s ease, transform .12s ease;
+}
+
+.chip:hover {
+  color: var(--text);
+  border-color: var(--border-hi);
+  background: var(--surface-hi);
+}
+
+.chip:active { transform: translateY(1px); }
+
+.chip:focus-visible {
+  outline: none;
+  border-color: var(--cold);
+  box-shadow: 0 0 0 3px var(--cold-soft);
+}
+
+.chip--on,
+.chip--on:hover {
+  color: #06121c;
+  background: var(--cold);
+  border-color: var(--cold);
+}
+
+/* Um dia sem litro nenhum. Continua clicavel - ver o vazio e informacao. */
+.chip--void { color: var(--text-faint); opacity: .45; }
+.chip--void:hover { opacity: .8; }
+.chip--on.chip--void { opacity: 1; color: #06121c; }
+
+.chip--wide { min-width: 92px; letter-spacing: .01em; }
+
+/* ---- consumo do periodo, no card do medidor ---- */
+
+.card__period {
+  margin: 0;
+  padding: 10px 17px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.card__period strong {
+  font-family: var(--font-num);
+  font-size: 15px;
+  color: var(--text);
+}
+
+/* Subtotais por semana: cinco barras no maximo, entao o grafico fica baixo. */
+.chart-wrap--narrow { height: 170px; }
+
+@media (max-width: 640px) {
+  .period { padding: 14px 15px 16px; }
+  .period__row { grid-template-columns: 1fr; gap: 7px; }
+  .period__label { margin-top: 0; }
+  .select { max-width: none; }
+  .chip { min-width: 31px; height: 31px; font-size: 12px; }
+}

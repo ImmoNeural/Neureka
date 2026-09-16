@@ -736,6 +736,14 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
     hourly: dict[int, dict[str, float]] = {
         hour: {"liters": 0.0, "observed_minutes": 0.0} for hour in range(24)
     }
+    # Litros por hora de CADA dia, nao por hora-do-dia agregada.
+    #
+    # O "hourly" acima responde "a que horas esta casa costuma gastar agua".
+    # Este responde "o que aconteceu no dia 16", que e outra pergunta e a que o
+    # grafico do dia faz. Preenchido no mesmo laco e sob a mesma condicao: so
+    # entra o que foi observado de fato, entao a agua de uma lacuna continua
+    # fora - ela e real, mas ninguem sabe em que hora passou.
+    by_day_hour: dict[str, list[float]] = {}
     observed_minutes = gap_minutes = 0.0
     observed_liters = gap_liters = 0.0
     absence_minutes = outage_minutes = 0.0
@@ -794,6 +802,9 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
                 bucket = hourly[piece_start.hour]
                 bucket["liters"] += litres * share
                 bucket["observed_minutes"] += piece_minutes
+                day_key = piece_start.strftime("%Y-%m-%d")
+                by_day_hour.setdefault(day_key, [0.0] * 24)
+                by_day_hour[day_key][piece_start.hour] += litres * share
 
     span_hours = (readings[-1].timestamp - readings[0].timestamp).total_seconds() / 3600.0
     total_minutes = observed_minutes + gap_minutes
@@ -860,6 +871,21 @@ def build_volume_analysis(readings: list[Reading]) -> dict[str, Any]:
         "gaps": sorted(gaps, key=lambda g: -g["hours"])[:8],
         "daily": daily_rows,
         "hourly": hourly_rows,
+        # { "2026-09-16": [0, 0, 12, ...] } - 24 posicoes por dia, em litros.
+        #
+        # SEM piso em zero, e de proposito - pelo mesmo motivo que o comentario
+        # dos deltas signed la em cima explica. Uma hora pode ficar levemente
+        # negativa por ruido da roda do milesimo e a hora seguinte recuperar.
+        # Zerando hora a hora, a recuperacao e contada e a queda nao, e a soma
+        # sobe sozinha: na serie real isso inflava 14/09 de 157 para 187 L.
+        #
+        # Signed, os valores telescopam e a soma das 24 horas bate com a parte
+        # observada do dia. Quem desenha a barra que corte em zero na exibicao;
+        # o numero guardado aqui continua honesto.
+        "hourly_by_day": {
+            dia: [round(valor) for valor in valores]
+            for dia, valores in sorted(by_day_hour.items())
+        },
     }
 
 

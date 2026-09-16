@@ -1,16 +1,16 @@
 {
   "span": {
     "from": "2026-09-13 00:37:04",
-    "to": "2026-09-16 12:28:15",
-    "hours": 83.9
+    "to": "2026-09-16 13:10:29",
+    "hours": 84.6
   },
   "coverage": {
-    "observed_minutes": 3981,
+    "observed_minutes": 4023,
     "gap_minutes": 1050,
     "absence_minutes": 0,
     "outage_minutes": 1050,
-    "observed_pct": 79.1,
-    "observed_pct_excl_absence": 79.1,
+    "observed_pct": 79.3,
+    "observed_pct_excl_absence": 79.3,
     "gap_count": 7,
     "absence_count": 0,
     "outage_count": 7
@@ -96,7 +96,7 @@
       "date": "2026-09-16",
       "liters": 80,
       "gap_liters": 17,
-      "observed_pct": 77.9
+      "observed_pct": 79.1
     }
   ],
   "hourly": [
@@ -174,15 +174,15 @@
     },
     {
       "hour": 12,
-      "liters": 65,
-      "observed_minutes": 166,
-      "liters_per_observed_hour": 23.38
+      "liters": 64,
+      "observed_minutes": 197,
+      "liters_per_observed_hour": 19.33
     },
     {
       "hour": 13,
-      "liters": 42,
-      "observed_minutes": 120,
-      "liters_per_observed_hour": 21.19
+      "liters": 43,
+      "observed_minutes": 130,
+      "liters_per_observed_hour": 19.92
     },
     {
       "hour": 14,
@@ -244,5 +244,111 @@
       "observed_minutes": 180,
       "liters_per_observed_hour": 1.66
     }
-  ]
+  ],
+  "hourly_by_day": {
+    "2026-09-13": [
+      0,
+      3,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5,
+      50,
+      34,
+      20,
+      8,
+      13,
+      36,
+      18,
+      9,
+      7,
+      0,
+      3,
+      7,
+      -2,
+      5
+    ],
+    "2026-09-14": [
+      -2,
+      0,
+      20,
+      -25,
+      1,
+      0,
+      6,
+      0,
+      0,
+      18,
+      5,
+      -3,
+      35,
+      35,
+      1,
+      2,
+      7,
+      11,
+      0,
+      26,
+      11,
+      8,
+      1,
+      0
+    ],
+    "2026-09-15": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      10,
+      1,
+      0,
+      3,
+      30,
+      1,
+      0,
+      0,
+      10,
+      0,
+      12,
+      75,
+      -24,
+      0,
+      0,
+      0,
+      0
+    ],
+    "2026-09-16": [
+      0,
+      -4,
+      4,
+      18,
+      -18,
+      0,
+      12,
+      9,
+      31,
+      0,
+      -4,
+      5,
+      9,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  }
 }

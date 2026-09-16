@@ -39,13 +39,64 @@
   <main class="shell">
     <p class="alert" id="global-alert" role="alert" hidden></p>
 
+    <!-- ===================================================== seletor de periodo
+         O mes escolhido aqui manda em tudo que vem abaixo: os graficos dos
+         medidores, os subtotais por semana e a previsao do mes. -->
+    <section class="section" aria-labelledby="period-title">
+      <div class="section__head">
+        <h2 class="section__title" id="period-title">Período</h2>
+        <p class="section__sub">
+          Escolha o mês e clique num dia, numa semana ou no mês inteiro.
+          Os gráficos abaixo seguem essa escolha.
+        </p>
+      </div>
+
+      <div class="period">
+        <div class="period__row period__row--month">
+          <label class="period__label" for="month-select">Mês</label>
+          <div class="select">
+            <select id="month-select" aria-label="Mês a exibir"></select>
+            <span class="select__arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="period__row">
+          <span class="period__label">Dia</span>
+          <div class="chips chips--days" id="day-grid" role="group" aria-label="Dias do mês"></div>
+        </div>
+
+        <div class="period__row">
+          <span class="period__label">Semana</span>
+          <div class="chips chips--spans" id="span-grid" role="group" aria-label="Semanas e mês inteiro"></div>
+        </div>
+      </div>
+    </section>
+
     <section class="section" aria-labelledby="meters-title">
       <div class="section__head">
         <h2 class="section__title" id="meters-title">Medidores</h2>
-        <p class="section__sub">Leitura acumulada de cada hidrômetro, em metros cúbicos.</p>
+        <p class="section__sub">
+          Leitura acumulada de cada hidrômetro e o consumo do período escolhido acima.
+        </p>
       </div>
       <div class="grid" id="meter-grid">
         <p class="muted" id="meters-loading">Carregando medidores…</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="forecast-title">
+      <div class="section__head">
+        <h2 class="section__title" id="forecast-title">Previsão do mês</h2>
+        <p class="section__sub">
+          Projeção do consumo até o fim do mês, por cômodo e no total.
+          Extrapolação linear do que já foi medido — vale mais quanto mais dias o mês tiver corrido.
+        </p>
+      </div>
+      <div class="grid grid--wide" id="forecast-grid">
+        <p class="muted" id="forecast-loading">Carregando previsão…</p>
       </div>
     </section>
 
@@ -53,9 +104,8 @@
       <div class="section__head">
         <h2 class="section__title" id="analysis-title">Análises</h2>
         <p class="section__sub">
-          Volume medido por dia e por hora do dia, quente e fria, em cada cômodo.
+          Subtotais por semana do mês e perfil por hora do dia, quente e fria, em cada cômodo.
           O hidrômetro é acumulado: o volume é exato mesmo com foto a cada 10 min.
-          A faixa de cobertura mostra quanto do período teve leitura de fato.
         </p>
       </div>
       <div class="grid grid--wide" id="analysis-grid">

@@ -1,22 +1,28 @@
 /* ==========================================================================
    Neureka - Monitor de Água
 
-   Reads the static JSON emitted by sync_to_site.py and renders one card per
-   meter plus a per-physical-room analysis section.
+   Reads the static JSON emitted by sync_to_site.py and renders, for a period
+   the user picks (one day, one week of the month, or the whole month):
+
+     - one meter card per hidrometro, with the volume chart of that period
+     - a forecast of where the month lands
+     - per-room analysis with subtotals by week
 
    Contract with the Python side:
      data/manifest.json           { generated_at, rooms: [ { room_key, label,
                                     temperature, has_data, last_reading,
                                     last_reading_at, last_sync,
                                     available_months: ["YYYY-MM", ...] } ] }
-     data/<room>/<YYYY-MM>.json   [ { timestamp, reading }, ... ]
-     data/<room>/daily.json       [ { date, session_count, banho_count,
-                                     descarga_count, total_liters,
-                                     avg_liters_per_banho,
-                                     avg_liters_per_descarga }, ... ]
+     data/<room>/analysis.json    { span, coverage, volume, gaps, daily, hourly,
+                                    hourly_by_day }
 
-   available_months is the authoritative shard list. The frontend never probes
-   for month files that may not exist.
+   ESTE ARQUIVO NAO CALCULA VOLUME. Ele so desenha o que o Python ja apurou.
+
+   A primeira versao somava os litros aqui, a partir das leituras cruas do
+   shard mensal. Parecia inofensivo e nao era: sem os guardas que moram no
+   sync_to_site.py, a agua de uma lacuna de 10 horas caia inteira no dia em que
+   a placa voltou, e o dia 15/09 da agua quente aparecia com 473 L em vez de
+   59 L. Os guardas ficam num lugar so; aqui e so apresentacao.
    ========================================================================== */
 
 'use strict';
@@ -27,10 +33,6 @@ const DATA_ROOT = 'data';
 // hourly, so three missed runs is a real signal that something is wrong.
 const STALE_AFTER_MS = 3 * 60 * 60 * 1000;
 
-// Averages in the analysis section are computed over this many trailing days
-// (counting only days that actually have data).
-const TRAILING_DAYS = 7;
-
 const COLORS = {
   quente: { line: '#fb923c', fill: 'rgba(251, 146, 60, 0.16)', bar: '#fb923c' },
   fria: { line: '#38bdf8', fill: 'rgba(56, 189, 248, 0.16)', bar: '#38bdf8' }
@@ -38,6 +40,25 @@ const COLORS = {
 
 const GRID_COLOR = 'rgba(148, 163, 184, 0.10)';
 const TICK_COLOR = '#7c8ea6';
+
+/*
+ * Dois medidores no manifest, um reloginho so.
+ *
+ * A lavanderia e a cozinha fria passam pelo MESMO hidrometro fisico, entao
+ * mante-los como duas entradas separadas mostraria o mesmo volume duas vezes e
+ * somaria errado no total. Aqui a lavanderia e dobrada dentro da cozinha fria e
+ * o rotulo diz que a medicao cobre os dois comodos.
+ *
+ * O backend segue emitindo as duas pastas - a fusao e so de exibicao, entao no
+ * dia em que forem dois medidores de verdade basta apagar este mapa.
+ */
+const MERGE_INTO = { lavanderia_fria: 'cozinha_fria' };
+const MERGED_LABEL = { cozinha_fria: 'Cozinha + Lavanderia - Fria' };
+
+const MONTH_NAMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -84,25 +105,57 @@ function formatDateTime(date) {
   });
 }
 
-function formatDayShort(isoDate) {
-  const parsed = parseStamp(`${isoDate} 00:00:00`);
-  if (!parsed) return isoDate;
-  return parsed.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+function titleCase(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Litros em pt-BR, sem casa decimal - o hidrometro resolve 1 L. */
+function formatLiters(value) {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  return Math.round(value).toLocaleString('pt-BR');
+}
+
+/** "YYYY-MM" -> "Setembro 2026" */
+function monthLabel(key) {
+  const [year, month] = key.split('-').map(Number);
+  return `${MONTH_NAMES[month - 1]} ${year}`;
+}
+
+/** Local "YYYY-MM-DD" for a Date. toISOString() would shift by the timezone. */
+function dayKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function daysInMonth(monthKey) {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Date(year, month, 0).getDate();
+}
+
+/** "2026-09" + 16 -> "2026-09-16" */
+function isoOf(monthKey, day) {
+  return `${monthKey}-${String(day).padStart(2, '0')}`;
 }
 
 /**
- * Rotulo do eixo X do grafico de leituras: dia E hora.
+ * As semanas do mes, na definicao de calendario simples: 1-7, 8-14, 15-21,
+ * 22-28 e o resto.
  *
- * Antes daqui o rotulo era so o dia. Com uma foto a cada 10 minutos, as ~50
- * leituras de um mesmo dia recebiam rotulos identicos, e o eixo nao dizia nada
- * sobre horario - dava para ver QUE houve leitura, nunca QUANDO. Um trecho sem
- * captura (placa sem energia, por exemplo) ficava indistinguivel de um trecho
- * de consumo zero: os dois viram linha reta.
+ * Nao e a semana ISO de proposito. O pedido e "semana 1 a 4, ou 5 se houver", e
+ * a semana ISO nao da isso: ela comeca na segunda, atravessa a virada do mes e
+ * produziria uma "semana 1" com tres dias de agosto dentro de setembro. Aqui
+ * cada semana e um bloco fechado de dias DESTE mes, que e o que soma certo num
+ * subtotal mensal.
  */
-function formatStampShort(date) {
-  return date.toLocaleString('pt-BR', {
-    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-  }).replace(',', '');
+function weeksOf(monthKey) {
+  const total = daysInMonth(monthKey);
+  const weeks = [];
+  for (let start = 1; start <= total; start += 7) {
+    weeks.push({ index: weeks.length + 1, from: start, to: Math.min(start + 6, total) });
+  }
+  return weeks;
 }
 
 /** The physical room a meter belongs to: "banheiro_quente" -> "banheiro". */
@@ -111,8 +164,67 @@ function roomGroupOf(roomKey) {
   return index === -1 ? roomKey : roomKey.slice(0, index);
 }
 
-function titleCase(text) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
+/* ------------------------------------------------- leitura dos numeros prontos
+
+   Tudo aqui e consulta ao que o Python apurou. Nenhuma soma de leitura crua.
+*/
+
+/** Litros de um dia especifico, ja com lacuna descontada pelo backend. */
+function litersOfDay(meter, monthKey, day) {
+  const value = meter.daily.get(isoOf(monthKey, day));
+  return Number.isFinite(value) ? value : 0;
+}
+
+/**
+ * As 24 horas de um dia, prontas para virar barra.
+ *
+ * O backend guarda valores signed. Uma hora negativa e ruido da roda do
+ * milesimo: a leitura cai um litro e a hora seguinte recupera. Barra negativa
+ * nao diz nada a ninguem, entao aqui tem que virar zero - mas NAO com
+ * Math.max(0, x).
+ *
+ * Simplesmente cortar em zero conta a recuperacao sem nunca contar a queda, e a
+ * soma das 24 barras passa o total do dia: na serie real o dia 14/09 dava 187 L
+ * de barras contra 164 L de dia. E o mesmo erro que o backend evita com deltas
+ * signed, so que mudado de lugar.
+ *
+ * Carregando o deficit para a hora seguinte, a queda e a recuperacao se anulam
+ * onde de fato aconteceram, nenhuma barra fica negativa e a soma continua sendo
+ * a parte observada do dia.
+ */
+function hoursOfDay(meter, iso) {
+  const row = meter.hourlyByDay[iso];
+  if (!Array.isArray(row)) return new Array(24).fill(0);
+
+  const total = row.reduce((sum, value) => sum + (Number(value) || 0), 0);
+  const alvo = Math.max(0, total);
+
+  // Passada para a frente: cada queda empurra o deficit para a hora seguinte.
+  const out = [];
+  let carry = 0;
+  for (const raw of row) {
+    const value = (Number(raw) || 0) + carry;
+    if (value < 0) {
+      out.push(0);
+      carry = value;
+    } else {
+      out.push(value);
+      carry = 0;
+    }
+  }
+
+  // Se o dia ACABA devendo, o deficit nao teve hora seguinte para absorver e
+  // ficaria perdido - a soma das barras passaria o total. Foi o que aconteceu
+  // com 15/09 da fria: 142 L de barras para 118 L de dia. O resto sai das
+  // ultimas horas, de tras para frente, onde a agua mais recente estava.
+  let sobra = out.reduce((a, b) => a + b, 0) - alvo;
+  for (let i = out.length - 1; i >= 0 && sobra > 0; i -= 1) {
+    const tira = Math.min(out[i], sobra);
+    out[i] -= tira;
+    sobra -= tira;
+  }
+
+  return out;
 }
 
 /* ------------------------------------------------------------------- charts */
@@ -147,242 +259,49 @@ const TOOLTIP_STYLE = {
   displayColors: false
 };
 
-/** Cumulative reading over time for one meter. */
-function renderReadingChart(canvas, points, temperature) {
-  const palette = COLORS[temperature] || COLORS.fria;
+/** Barras de litros. Usada pelo card do medidor e pelos subtotais por semana. */
+function renderBarChart(canvas, labels, series, yTitle, maxBar) {
   return new Chart(canvas, {
-    type: 'line',
+    type: 'bar',
     data: {
-      labels: points.map((point) => point.date),
-      datasets: [{
-        data: points.map((point) => point.reading),
-        borderColor: palette.line,
-        backgroundColor: palette.fill,
-        borderWidth: 2,
-        fill: true,
-        tension: 0.25,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: palette.line
-      }]
+      labels,
+      datasets: series.map((entry) => ({
+        label: entry.label,
+        data: entry.values,
+        backgroundColor: entry.color,
+        borderRadius: 4,
+        borderSkipped: false,
+        maxBarThickness: maxBar || 22
+      }))
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
           ...TOOLTIP_STYLE,
+          displayColors: series.length > 1,
           callbacks: {
-            title: (items) => formatDateTime(points[items[0].dataIndex].at),
-            label: (item) => `${item.parsed.y.toFixed(3)} m³`
+            label: (item) => `${item.dataset.label}: ${formatLiters(item.parsed.y)} L`
           }
         }
       },
       scales: {
-        ...baseScales('m³'),
-        y: { ...baseScales('m³').y, beginAtZero: false }
+        ...baseScales(yTitle),
+        y: { ...baseScales(yTitle).y, beginAtZero: true }
       }
     }
   });
 }
 
-/** Banhos and descargas per day for one physical room. */
-function renderSessionChart(canvas, labels, series) {
-  return new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: series.map((entry) => ({
-        label: entry.label,
-        data: entry.values,
-        backgroundColor: entry.color,
-        borderRadius: 4,
-        borderSkipped: false,
-        maxBarThickness: 26
-      }))
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...TOOLTIP_STYLE,
-          displayColors: true,
-          callbacks: { label: (item) => `${item.dataset.label}: ${item.parsed.y}` }
-        }
-      },
-      scales: {
-        ...baseScales('por dia'),
-        y: {
-          ...baseScales('por dia').y,
-          beginAtZero: true,
-          ticks: {
-            ...baseScales('por dia').y.ticks,
-            precision: 0,
-            // Counts are integers; hide fractional gridline labels.
-            callback: (value) => (Number.isInteger(value) ? value : '')
-          }
-        }
-      }
-    }
-  });
-}
-
-/* -------------------------------------------------------------- meter cards */
-
-function emptyCard(room) {
-  const card = el('article', 'card card--empty');
-  card.dataset.temp = room.temperature;
-
-  const icon = el('div', 'empty__icon');
-  icon.innerHTML =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" ' +
-    'stroke-linecap="round"><path d="M12 3.2c3.1 3.9 5.5 7 5.5 9.8a5.5 5.5 0 0 1-11 0' +
-    'c0-2.8 2.4-5.9 5.5-9.8Z"/><path d="M4 20 20 4"/></svg>';
-
-  card.append(icon);
-  card.append(el('h3', 'card__title', room.label));
-  card.append(el('span', `badge badge--empty`, 'sem medidor'));
-  card.append(el('p', 'empty__text', 'Sem dados ainda — instale a câmera deste cômodo.'));
-  return card;
-}
-
-function meterCard(room, points) {
-  const card = el('article', 'card');
-  card.dataset.temp = room.temperature;
-
-  const head = el('div', 'card__head');
-  const heading = el('div');
-  heading.append(el('h3', 'card__title', room.label));
-  const readAt = parseStamp(room.last_reading_at);
-  heading.append(el('p', 'card__meta', readAt ? formatDateTime(readAt) : '—'));
-  head.append(heading);
-  head.append(el('span', `badge badge--${room.temperature}`, room.temperature));
-  card.append(head);
-
-  const tile = el('div', 'tile');
-  tile.append(el('span', 'tile__value', Number(room.last_reading).toFixed(3)));
-  tile.append(el('span', 'tile__unit', 'm³'));
-  tile.append(el('span', 'tile__label', 'leitura atual'));
-  card.append(tile);
-
-  if (!points.length) {
-    card.append(el('p', 'card__note', 'Histórico indisponível — nenhum arquivo mensal pôde ser lido.'));
-    return card;
-  }
-
-  if (!chartsAvailable) {
-    card.append(el('p', 'card__note', 'Gráfico indisponível: a biblioteca Chart.js não carregou.'));
-    return card;
-  }
-
-  const wrap = el('div', 'chart-wrap');
-  const canvas = el('canvas');
-  canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', `Leitura acumulada de ${room.label}`);
-  wrap.append(canvas);
-  card.append(wrap);
-
-  const first = points[0];
-  const last = points[points.length - 1];
-  const consumed = ((last.reading - first.reading) * 1000).toFixed(0);
-  card.append(el(
-    'p', 'card__note',
-    `${points.length} leituras válidas · ${consumed} L consumidos no período`
-  ));
-
-  renderReadingChart(canvas, points, room.temperature);
-  return card;
-}
-
-/** Load and flatten every monthly shard the manifest declares for a room. */
-async function loadHistory(room) {
-  const months = Array.isArray(room.available_months) ? room.available_months : [];
-  const shards = await Promise.all(
-    months.map((month) => fetchJson(`${DATA_ROOT}/${room.room_key}/${month}.json`))
-  );
-
-  const points = [];
-  for (const shard of shards) {
-    if (!Array.isArray(shard)) continue;
-    for (const entry of shard) {
-      const at = parseStamp(entry && entry.timestamp);
-      const reading = Number(entry && entry.reading);
-      if (!at || !Number.isFinite(reading)) continue;
-      points.push({ at, reading, date: formatStampShort(at) });
-    }
-  }
-  points.sort((a, b) => a.at - b.at);
-  return points;
-}
-
-/* ----------------------------------------------------------- analysis cards */
-
-/*
- * The analysis section reports VOLUME, not events.
- *
- * A cumulative meter measures how much water passed exactly, even when it is
- * photographed only every ten minutes. What that sampling rate destroys is when
- * and how fast. Counting showers and flushes needs both, so those counts are not
- * shown here: on the real bathroom series the session layer placed 124 of 512
- * litres and implied 1.5-4.7 L/min for showers that physically run 8-12.
- *
- * Litres per day, litres per hour of day, and how much of the period was actually
- * observed are all things the meter genuinely knows. Those are what this renders,
- * and the coverage strip states the blind spot outright rather than letting an
- * unobserved stretch read as a quiet one.
- */
-
-// How many trailing days the per-day volume chart shows.
-const VOLUME_DAYS = 14;
-
-// Below this much observation an hour's litres-per-hour is a small denominator
-// amplifying noise, so the backend leaves it null and the chart leaves it blank.
-const HOUR_LABELS = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}h`);
-
-/** Litres per day, one grouped bar series per meter. */
-function renderVolumeChart(canvas, labels, series) {
-  return new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: series.map((entry) => ({
-        label: entry.label,
-        data: entry.values,
-        backgroundColor: entry.color,
-        borderRadius: 4,
-        borderSkipped: false,
-        maxBarThickness: 22
-      }))
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          ...TOOLTIP_STYLE,
-          displayColors: true,
-          callbacks: { label: (item) => `${item.dataset.label}: ${item.parsed.y} L` }
-        }
-      },
-      scales: {
-        ...baseScales('litros'),
-        y: { ...baseScales('litros').y, beginAtZero: true }
-      }
-    }
-  });
-}
-
-/** Litres per observed hour, by hour of day. Unobserved hours stay empty. */
+/** Litros por hora observada, por hora do dia. Horas sem observacao ficam vazias. */
 function renderHourlyChart(canvas, series) {
+  const labels = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}h`);
   return new Chart(canvas, {
     type: 'bar',
     data: {
-      labels: HOUR_LABELS,
+      labels,
       datasets: series.map((entry) => ({
         label: entry.label,
         data: entry.values,
@@ -411,144 +330,338 @@ function renderHourlyChart(canvas, series) {
       },
       scales: {
         ...baseScales('L / hora observada'),
-        x: {
-          ...baseScales().x,
-          ticks: { ...baseScales().x.ticks, autoSkipPadding: 4 }
-        },
+        x: { ...baseScales().x, ticks: { ...baseScales().x.ticks, autoSkipPadding: 4 } },
         y: { ...baseScales('L / hora observada').y, beginAtZero: true }
       }
     }
   });
 }
 
-/** One figure with a caption. Value is pre-formatted; unit renders smaller. */
-function volumeStat(label, value, modifier, unit) {
+/* --------------------------------------------------------------- app state */
+
+const state = {
+  months: [],        // ["2026-08", "2026-09"], mais novo por ultimo
+  month: null,       // "2026-09"
+  selection: null,   // { type: 'day'|'week'|'month', day?, week? }
+  meters: [],        // [{ room, daily: Map, hourlyByDay: {}, hourly: [] }]
+  emptyRooms: []
+};
+
+const charts = [];
+
+function destroyCharts() {
+  while (charts.length) {
+    const chart = charts.pop();
+    try { chart.destroy(); } catch (error) { /* chart ja morto, tudo bem */ }
+  }
+}
+
+/** O intervalo de dias que a selecao cobre, dentro do mes escolhido. */
+function selectedRange() {
+  const total = daysInMonth(state.month);
+  const sel = state.selection;
+  if (sel.type === 'day') return { from: sel.day, to: sel.day };
+  if (sel.type === 'week') {
+    const week = weeksOf(state.month).find((w) => w.index === sel.week);
+    return week ? { from: week.from, to: week.to } : { from: 1, to: total };
+  }
+  return { from: 1, to: total };
+}
+
+function selectionLabel() {
+  const sel = state.selection;
+  const [year, month] = state.month.split('-');
+  if (sel.type === 'day') return `${String(sel.day).padStart(2, '0')}/${month}/${year}`;
+  if (sel.type === 'week') {
+    const range = selectedRange();
+    return `semana ${sel.week} (${range.from}–${range.to}/${month})`;
+  }
+  return monthLabel(state.month);
+}
+
+/** Litros do medidor no periodo selecionado. */
+function litersInSelection(meter) {
+  const range = selectedRange();
+  let sum = 0;
+  for (let day = range.from; day <= range.to; day += 1) {
+    sum += litersOfDay(meter, state.month, day);
+  }
+  return sum;
+}
+
+/* ------------------------------------------------------- seletor de periodo */
+
+function renderMonthSelect() {
+  const select = document.getElementById('month-select');
+  select.replaceChildren();
+  for (const month of [...state.months].reverse()) {
+    const option = el('option', null, monthLabel(month));
+    option.value = month;
+    if (month === state.month) option.selected = true;
+    select.append(option);
+  }
+  select.onchange = () => {
+    state.month = select.value;
+    // Trocar de mes zera a selecao: o dia 31 pode nao existir no mes novo.
+    state.selection = { type: 'month' };
+    renderPeriod();
+    renderAll();
+  };
+}
+
+function chip(text, active, title, onClick) {
+  const button = el('button', 'chip', text);
+  button.type = 'button';
+  if (title) button.title = title;
+  button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  if (active) button.classList.add('chip--on');
+  button.onclick = onClick;
+  return button;
+}
+
+/**
+ * Os quadradinhos.
+ *
+ * Um dia sem nenhum litro medido em nenhum medidor recebe a classe chip--void.
+ * Ele continua clicavel de proposito - ver um dia vazio e uma informacao, e
+ * esconder o dia faria a grade pular numeros.
+ */
+function renderPeriod() {
+  const dayGrid = document.getElementById('day-grid');
+  const spanGrid = document.getElementById('span-grid');
+  dayGrid.replaceChildren();
+  spanGrid.replaceChildren();
+
+  const total = daysInMonth(state.month);
+
+  const withData = new Set();
+  for (const meter of state.meters) {
+    for (let day = 1; day <= total; day += 1) {
+      if (litersOfDay(meter, state.month, day) > 0) withData.add(day);
+    }
+  }
+
+  for (let day = 1; day <= total; day += 1) {
+    const active = state.selection.type === 'day' && state.selection.day === day;
+    const button = chip(String(day), active, null, () => {
+      state.selection = { type: 'day', day };
+      renderPeriod();
+      renderAll();
+    });
+    if (!withData.has(day)) button.classList.add('chip--void');
+    dayGrid.append(button);
+  }
+
+  for (const week of weeksOf(state.month)) {
+    const active = state.selection.type === 'week' && state.selection.week === week.index;
+    spanGrid.append(chip(
+      `S${week.index}`,
+      active,
+      `Dias ${week.from} a ${week.to}`,
+      () => {
+        state.selection = { type: 'week', week: week.index };
+        renderPeriod();
+        renderAll();
+      }
+    ));
+  }
+
+  const monthChip = chip('Mês todo', state.selection.type === 'month', null, () => {
+    state.selection = { type: 'month' };
+    renderPeriod();
+    renderAll();
+  });
+  monthChip.classList.add('chip--wide');
+  spanGrid.append(monthChip);
+}
+
+/* -------------------------------------------------------------- meter cards */
+
+function emptyCard(room) {
+  const card = el('article', 'card card--empty');
+  card.dataset.temp = room.temperature;
+
+  const icon = el('div', 'empty__icon');
+  icon.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" ' +
+    'stroke-linecap="round"><path d="M12 3.2c3.1 3.9 5.5 7 5.5 9.8a5.5 5.5 0 0 1-11 0' +
+    'c0-2.8 2.4-5.9 5.5-9.8Z"/><path d="M4 20 20 4"/></svg>';
+
+  card.append(icon);
+  card.append(el('h3', 'card__title', room.label));
+  card.append(el('span', 'badge badge--empty', 'sem medidor'));
+  card.append(el('p', 'empty__text', 'Sem dados ainda — instale a câmera deste cômodo.'));
+  return card;
+}
+
+function meterCard(meter) {
+  const { room } = meter;
+  const card = el('article', 'card');
+  card.dataset.temp = room.temperature;
+
+  const head = el('div', 'card__head');
+  const heading = el('div');
+  heading.append(el('h3', 'card__title', room.label));
+  const readAt = parseStamp(room.last_reading_at);
+  heading.append(el('p', 'card__meta', readAt ? formatDateTime(readAt) : '—'));
+  head.append(heading);
+  head.append(el('span', `badge badge--${room.temperature}`, room.temperature));
+  card.append(head);
+
+  const tile = el('div', 'tile');
+  tile.append(el('span', 'tile__value', Number(room.last_reading).toFixed(3)));
+  tile.append(el('span', 'tile__unit', 'm³'));
+  tile.append(el('span', 'tile__label', 'leitura atual'));
+  card.append(tile);
+
+  const liters = litersInSelection(meter);
+  const consumo = el('p', 'card__period');
+  consumo.append(el('strong', null, `${formatLiters(liters)} L`));
+  consumo.append(document.createTextNode(` em ${selectionLabel()}`));
+  card.append(consumo);
+
+  if (!chartsAvailable) {
+    card.append(el('p', 'card__note', 'Gráfico indisponível: a biblioteca Chart.js não carregou.'));
+    return card;
+  }
+
+  const palette = COLORS[room.temperature] || COLORS.fria;
+  let labels;
+  let values;
+  let yTitle;
+
+  if (state.selection.type === 'day') {
+    const iso = isoOf(state.month, state.selection.day);
+    labels = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}h`);
+    values = hoursOfDay(meter, iso);
+    yTitle = 'litros / hora';
+  } else {
+    const range = selectedRange();
+    labels = [];
+    values = [];
+    for (let day = range.from; day <= range.to; day += 1) {
+      labels.push(String(day));
+      values.push(litersOfDay(meter, state.month, day));
+    }
+    yTitle = 'litros / dia';
+  }
+
+  const wrap = el('div', 'chart-wrap');
+  const canvas = el('canvas');
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', `Consumo de ${room.label} em ${selectionLabel()}`);
+  wrap.append(canvas);
+  card.append(wrap);
+
+  charts.push(renderBarChart(
+    canvas, labels,
+    [{ label: titleCase(room.temperature), color: palette.bar, values }],
+    yTitle,
+    state.selection.type === 'day' ? 14 : 22
+  ));
+
+  // Um dia sem hora nenhuma quase sempre e lacuna de captura, nao dia seco.
+  if (state.selection.type === 'day' && values.every((v) => v === 0) && liters > 0) {
+    card.append(el(
+      'p', 'card__note',
+      'Os litros deste dia passaram enquanto a câmera estava fora, então não dá ' +
+      'para situá-los numa hora.'
+    ));
+  }
+
+  return card;
+}
+
+/* ------------------------------------------------------------ previsao do mes
+
+   Extrapolacao linear: o que passou por dia ate agora, vezes os dias do mes.
+
+   E deliberadamente o metodo mais simples que existe, e o card diz isso na cara.
+   Um modelo melhor precisaria de sazonalidade semanal (fim de semana gasta
+   diferente de terca) e de varios meses de historico para estimar - com quatro
+   dias de serie, qualquer coisa mais elaborada seria precisao fingida.
+
+   O divisor conta os dias JA DECORRIDOS, nao os dias com dado. Se a placa ficou
+   dois dias fora, esses dois dias tiveram consumo real que ninguem mediu, e
+   dividir so pelos dias observados inflaria a media diaria.
+*/
+
+function forecastFor(meters) {
+  const today = new Date();
+  const total = daysInMonth(state.month);
+  const isCurrentMonth = dayKey(today).slice(0, 7) === state.month;
+  const elapsed = isCurrentMonth ? today.getDate() : total;
+
+  let measured = 0;
+  for (const meter of meters) {
+    for (let day = 1; day <= total; day += 1) {
+      measured += litersOfDay(meter, state.month, day);
+    }
+  }
+
+  if (elapsed <= 0) return { measured, projected: null, elapsed, total, isCurrentMonth };
+  const projected = isCurrentMonth ? (measured / elapsed) * total : measured;
+  return { measured, projected, elapsed, total, isCurrentMonth };
+}
+
+function amountStat(label, value, modifier) {
   const stat = el('div', `stat ${modifier}`);
   stat.append(el('span', 'stat__label', label));
   const box = el('div', 'stat__value');
-  if (value === null || value === undefined) {
+  const text = formatLiters(value);
+  if (text === null) {
     box.classList.add('stat__value--none');
     box.textContent = '—';
   } else {
-    box.append(document.createTextNode(String(value)));
-    if (unit) box.append(el('small', null, unit));
+    box.append(document.createTextNode(text));
+    box.append(el('small', null, 'L'));
   }
   stat.append(box);
   return stat;
 }
 
-/** Percentage in pt-BR: decimal comma, and no ",0" tail on round numbers. */
-function formatPct(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return '—';
-  return (Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',')) + '%';
+function forecastCard(name, hotMeters, coldMeters) {
+  const card = el('article', 'card');
+  const hot = forecastFor(hotMeters);
+  const cold = forecastFor(coldMeters);
+
+  const head = el('div', 'card__head');
+  const heading = el('div');
+  heading.append(el('h3', 'card__title', name));
+  heading.append(el('p', 'card__meta', monthLabel(state.month)));
+  head.append(heading);
+  card.append(head);
+
+  const hotProjected = hotMeters.length ? hot.projected : null;
+  const coldProjected = coldMeters.length ? cold.projected : null;
+  const totalProjected = (hotProjected || 0) + (coldProjected || 0);
+
+  const stats = el('div', 'stats');
+  stats.append(amountStat('Previsto total', totalProjected || null, 'stat--total'));
+  stats.append(amountStat('Quente', hotProjected, 'stat--hot'));
+  stats.append(amountStat('Fria', coldProjected, 'stat--cold'));
+  card.append(stats);
+
+  const measured = hot.measured + cold.measured;
+  card.append(el(
+    'p', 'card__note',
+    hot.isCurrentMonth
+      ? `${formatLiters(measured)} L medidos em ${hot.elapsed} de ${hot.total} dias. ` +
+        'A projeção repete essa média diária até o fim do mês.'
+      : `${formatLiters(measured)} L no mês fechado — não há o que projetar.`
+  ));
+
+  return card;
 }
 
-/** "8,7 h" / "8,7 dias" -- gaps run from an hour to over a week. */
-function formatDuration(hours) {
-  if (hours < 24) return `${hours.toFixed(1).replace('.', ',')} h`;
-  return `${(hours / 24).toFixed(1).replace('.', ',')} dias`;
-}
-
-/** "03/09 02:04" from "2026-09-03 02:04:27". */
-function formatGapStamp(text) {
-  const stamp = parseStamp(text);
-  if (!stamp) return text;
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-  }).format(stamp).replace(',', '');
-}
-
-/**
- * The coverage strip. This is the part that keeps the rest honest: it says how
- * much of the period had readings at all, and how many litres flowed while the
- * camera was blind. Those litres are real and counted in the total, but they
- * cannot be placed on a day or an hour, so every chart above is missing them.
- *
- * Two percentages, deliberately. A week away with the meters unplugged is not the
- * same failure as a board that browns out for two hours, and averaging them into
- * one number makes a holiday look like a broken pipeline. The headline figure
- * excludes planned absences and answers "is capture healthy"; the raw figure
- * answers "how much of the calendar has data".
- */
-function coverageStrip(members) {
-  const wrap = el('div', 'coverage');
-
-  for (const member of members) {
-    const { room, analysis } = member;
-    const coverage = analysis.coverage;
-    const volume = analysis.volume;
-    if (!coverage || !volume) continue;
-
-    const row = el('div', 'coverage__row');
-    row.dataset.temp = room.temperature;
-
-    const headline = Number.isFinite(coverage.observed_pct_excl_absence)
-      ? coverage.observed_pct_excl_absence
-      : coverage.observed_pct;
-
-    const head = el('div', 'coverage__head');
-    head.append(el('span', 'coverage__name', titleCase(room.temperature)));
-    head.append(el('span', 'coverage__pct', `${formatPct(headline)} observado`));
-    row.append(head);
-
-    const track = el('div', 'coverage__track');
-    const fill = el('div', 'coverage__fill');
-    fill.style.width = `${Math.max(0, Math.min(100, headline))}%`;
-    track.append(fill);
-    row.append(track);
-
-    const absenceMinutes = coverage.absence_minutes || 0;
-    if (absenceMinutes > 0) {
-      row.append(el(
-        'p', 'coverage__note',
-        `Fora de ausências programadas. Contando o calendário inteiro são ` +
-        `${formatPct(coverage.observed_pct)}: ${formatDuration(absenceMinutes / 60)} com os ` +
-        `medidores desligados, e ${volume.absence_liters} L passaram nesse período.`
-      ));
-    }
-
-    const outageLiters = volume.outage_liters ?? volume.gap_liters;
-    const outageCount = coverage.outage_count ?? coverage.gap_count;
-    row.append(el(
-      'p', 'coverage__note',
-      outageCount
-        ? `${outageCount} quedas de captura somando ` +
-          `${formatDuration((coverage.outage_minutes || 0) / 60)}, com ${outageLiters} L ` +
-          'que estão no total mas não podem ser situados em nenhum dia ou hora.'
-        : 'Sem quedas de captura no período.'
-    ));
-
-    if (Array.isArray(analysis.gaps) && analysis.gaps.length) {
-      const list = el('ul', 'gaps');
-      for (const gap of analysis.gaps.slice(0, 4)) {
-        const item = el('li', 'gaps__item');
-        item.dataset.kind = gap.kind;
-        item.append(el('span', 'gaps__dur', formatDuration(gap.hours)));
-        item.append(el(
-          'span', 'gaps__when',
-          `${formatGapStamp(gap.from)} → ${formatGapStamp(gap.to)}`
-        ));
-        item.append(el(
-          'span', 'gaps__tag',
-          gap.kind === 'absence' ? 'desligado' : 'queda'
-        ));
-        item.append(el('span', 'gaps__liters', `${gap.liters} L`));
-        list.append(item);
-      }
-      row.append(list);
-    }
-
-    wrap.append(row);
-  }
-
-  return wrap.childElementCount ? wrap : null;
-}
+/* ----------------------------------------------------------- analysis cards */
 
 function analysisCard(group) {
   const { name, hot, cold } = group;
   const card = el('article', 'card');
   card.dataset.temp = hot ? 'quente' : 'fria';
+
+  const members = [hot, cold].filter(Boolean);
 
   const head = el('div', 'card__head');
   const heading = el('div');
@@ -558,99 +671,93 @@ function analysisCard(group) {
   head.append(heading);
   card.append(head);
 
-  const members = [hot, cold].filter((m) => m && m.analysis && m.analysis.volume);
-
   if (!members.length) {
     card.append(el('p', 'card__note', 'Ainda sem leituras suficientes para medir volume.'));
     return card;
   }
 
-  const hotVolume = hot?.analysis?.volume?.total_liters ?? null;
-  const coldVolume = cold?.analysis?.volume?.total_liters ?? null;
-  const total = members.reduce((sum, m) => sum + m.analysis.volume.total_liters, 0);
+  /* ---- subtotais por semana ---- */
+
+  const weeks = weeksOf(state.month);
+  const labels = weeks.map((week) => `S${week.index}`);
+  const series = [];
+  const legend = el('div', 'legend');
+
+  let hotTotal = null;
+  let coldTotal = null;
+
+  for (const member of members) {
+    const isHot = member.room.temperature === 'quente';
+    const values = weeks.map((week) => {
+      let sum = 0;
+      for (let day = week.from; day <= week.to; day += 1) {
+        sum += litersOfDay(member, state.month, day);
+      }
+      return Math.round(sum);
+    });
+    const sum = values.reduce((a, b) => a + b, 0);
+    if (isHot) hotTotal = sum; else coldTotal = sum;
+
+    series.push({
+      label: isHot ? 'Quente' : 'Fria',
+      color: isHot ? COLORS.quente.bar : COLORS.fria.bar,
+      values
+    });
+
+    const item = el('span', 'legend__item');
+    item.append(el('span', `legend__swatch legend__swatch--${isHot ? 'hot' : 'cold'}`));
+    item.append(document.createTextNode(isHot ? 'Quente (L/semana)' : 'Fria (L/semana)'));
+    legend.append(item);
+  }
 
   const stats = el('div', 'stats');
-  stats.append(volumeStat('Total medido', total, 'stat--total', 'L'));
-  stats.append(volumeStat('Quente', hotVolume, 'stat--hot', 'L'));
-  stats.append(volumeStat('Fria', coldVolume, 'stat--cold', 'L'));
+  stats.append(amountStat('Total no mês', (hotTotal || 0) + (coldTotal || 0), 'stat--total'));
+  stats.append(amountStat('Quente', hotTotal, 'stat--hot'));
+  stats.append(amountStat('Fria', coldTotal, 'stat--cold'));
   card.append(stats);
 
-  /* ---- litros por dia, quente x fria ---- */
+  card.append(el('h4', 'card__subtitle', 'Subtotais por semana'));
+  card.append(legend);
 
-  const dates = [...new Set(
-    members.flatMap((m) => m.analysis.daily.map((day) => day.date))
-  )].sort().slice(-VOLUME_DAYS);
-
-  if (dates.length) {
-    const legend = el('div', 'legend');
-    const series = [];
-
-    for (const member of members) {
-      const isHot = member.room.temperature === 'quente';
-      const byDate = new Map(member.analysis.daily.map((day) => [day.date, day]));
-      series.push({
-        label: isHot ? 'Quente' : 'Fria',
-        color: isHot ? COLORS.quente.bar : COLORS.fria.bar,
-        values: dates.map((date) => byDate.get(date)?.liters ?? 0)
-      });
-      const item = el('span', 'legend__item');
-      item.append(el('span', `legend__swatch legend__swatch--${isHot ? 'hot' : 'cold'}`));
-      item.append(document.createTextNode(isHot ? 'Quente (L/dia)' : 'Fria (L/dia)'));
-      legend.append(item);
-    }
-    card.append(el('h4', 'card__subtitle', 'Litros por dia'));
-    card.append(legend);
-
-    if (chartsAvailable) {
-      const wrap = el('div', 'chart-wrap chart-wrap--tall');
-      const canvas = el('canvas');
-      canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', `Litros por dia em ${name}`);
-      wrap.append(canvas);
-      card.append(wrap);
-      renderVolumeChart(canvas, dates.map(formatDayShort), series);
-    } else {
-      card.append(el('p', 'card__note', 'Gráfico indisponível: a biblioteca Chart.js não carregou.'));
-    }
+  if (chartsAvailable) {
+    const wrap = el('div', 'chart-wrap chart-wrap--narrow');
+    const canvas = el('canvas');
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', `Litros por semana em ${name}`);
+    wrap.append(canvas);
+    card.append(wrap);
+    charts.push(renderBarChart(canvas, labels, series, 'litros', 34));
+  } else {
+    card.append(el('p', 'card__note', 'Gráfico indisponível: a biblioteca Chart.js não carregou.'));
   }
 
   /* ---- perfil por hora do dia ---- */
 
   const hourSeries = members
-    .filter((m) => Array.isArray(m.analysis.hourly))
     .map((member) => {
+      if (!Array.isArray(member.hourly)) return null;
       const isHot = member.room.temperature === 'quente';
       return {
         label: isHot ? 'Quente' : 'Fria',
         color: isHot ? COLORS.quente.bar : COLORS.fria.bar,
-        values: member.analysis.hourly.map((entry) => entry.liters_per_observed_hour)
+        values: member.hourly.map((entry) => entry.liters_per_observed_hour)
       };
     })
-    .filter((entry) => entry.values.some((value) => value !== null && value !== undefined));
+    .filter((entry) => entry && entry.values.some((v) => v !== null && v !== undefined));
 
-  if (hourSeries.length) {
+  if (hourSeries.length && chartsAvailable) {
     card.append(el('h4', 'card__subtitle', 'Perfil por hora do dia'));
     card.append(el(
       'p', 'card__note',
       'Litros por hora observada — corrige o viés das horas em que a câmera esteve fora.'
     ));
-    if (chartsAvailable) {
-      const wrap = el('div', 'chart-wrap');
-      const canvas = el('canvas');
-      canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', `Consumo por hora do dia em ${name}`);
-      wrap.append(canvas);
-      card.append(wrap);
-      renderHourlyChart(canvas, hourSeries);
-    }
-  }
-
-  /* ---- cobertura ---- */
-
-  const strip = coverageStrip(members);
-  if (strip) {
-    card.append(el('h4', 'card__subtitle', 'Cobertura da captura'));
-    card.append(strip);
+    const wrap = el('div', 'chart-wrap');
+    const canvas = el('canvas');
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', `Consumo por hora do dia em ${name}`);
+    wrap.append(canvas);
+    card.append(wrap);
+    charts.push(renderHourlyChart(canvas, hourSeries));
   }
 
   return card;
@@ -688,6 +795,61 @@ function showAlert(message) {
   alert.hidden = false;
 }
 
+/* ------------------------------------------------------------------ render */
+
+function groupsOfMeters() {
+  const groups = new Map();
+  for (const meter of state.meters) {
+    const name = roomGroupOf(meter.room.room_key);
+    const group = groups.get(name) || { name, hot: null, cold: null };
+    if (meter.room.temperature === 'quente') group.hot = meter;
+    else group.cold = meter;
+    groups.set(name, group);
+  }
+  return groups;
+}
+
+function renderAll() {
+  destroyCharts();
+
+  const meterGrid = document.getElementById('meter-grid');
+  const forecastGrid = document.getElementById('forecast-grid');
+  const analysisGrid = document.getElementById('analysis-grid');
+  meterGrid.replaceChildren();
+  forecastGrid.replaceChildren();
+  analysisGrid.replaceChildren();
+
+  for (const meter of state.meters) meterGrid.append(meterCard(meter));
+  for (const room of state.emptyRooms) meterGrid.append(emptyCard(room));
+
+  const groups = groupsOfMeters();
+
+  if (!groups.size) {
+    forecastGrid.append(el('p', 'muted', 'Sem medidor com leitura — nada a projetar.'));
+    analysisGrid.append(el('p', 'muted', 'Nenhuma análise disponível ainda.'));
+    return;
+  }
+
+  for (const group of groups.values()) {
+    forecastGrid.append(forecastCard(
+      titleCase(group.name),
+      group.hot ? [group.hot] : [],
+      group.cold ? [group.cold] : []
+    ));
+  }
+
+  // O total da casa so faz sentido com mais de um comodo medindo.
+  if (groups.size > 1) {
+    forecastGrid.append(forecastCard(
+      'Casa inteira',
+      state.meters.filter((m) => m.room.temperature === 'quente'),
+      state.meters.filter((m) => m.room.temperature === 'fria')
+    ));
+  }
+
+  for (const group of groups.values()) analysisGrid.append(analysisCard(group));
+}
+
 /* ---------------------------------------------------------------- bootstrap */
 
 async function init() {
@@ -697,10 +859,6 @@ async function init() {
   }
 
   const manifest = await fetchJson(`${DATA_ROOT}/manifest.json`);
-  const meterGrid = document.getElementById('meter-grid');
-  const analysisGrid = document.getElementById('analysis-grid');
-  meterGrid.replaceChildren();
-  analysisGrid.replaceChildren();
 
   if (!manifest || !Array.isArray(manifest.rooms)) {
     showAlert(
@@ -715,46 +873,96 @@ async function init() {
   const rooms = manifest.rooms;
   updateBanner(rooms);
 
-  // Every meter's history in parallel - one slow shard must not serialise the rest.
-  const histories = await Promise.all(
-    rooms.map((room) => (room.has_data ? loadHistory(room) : Promise.resolve([])))
-  );
+  // Uma analise por medidor com dado. E a unica fonte de numero deste arquivo.
+  const analyses = await Promise.all(rooms.map((room) => (
+    room.has_data
+      ? fetchJson(`${DATA_ROOT}/${room.room_key}/analysis.json`)
+      : Promise.resolve(null)
+  )));
 
+  // Junta os medidores que sao o mesmo reloginho antes de montar qualquer card.
+  const byKey = new Map();
   rooms.forEach((room, index) => {
-    const hasReading = room.has_data && Number.isFinite(Number(room.last_reading));
-    meterGrid.append(hasReading ? meterCard(room, histories[index]) : emptyCard(room));
+    const target = MERGE_INTO[room.room_key] || room.room_key;
+    const analysis = analyses[index];
+    const existing = byKey.get(target);
+
+    if (existing) {
+      if (analysis && !existing.analysis) {
+        existing.analysis = analysis;
+        existing.room = {
+          ...existing.room,
+          has_data: true,
+          last_reading: room.last_reading,
+          last_reading_at: room.last_reading_at
+        };
+      }
+      return;
+    }
+
+    const base = rooms.find((r) => r.room_key === target) || room;
+    byKey.set(target, {
+      room: {
+        ...base,
+        label: MERGED_LABEL[target] || base.label,
+        has_data: base.has_data || room.has_data,
+        last_reading: base.has_data ? base.last_reading : room.last_reading,
+        last_reading_at: base.has_data ? base.last_reading_at : room.last_reading_at
+      },
+      analysis: base.room_key === room.room_key ? analysis : null
+    });
   });
 
-  // Analysis is per physical room, pairing that room's hot and cold meters.
-  const analysisByRoom = new Map();
-  await Promise.all(rooms.filter((room) => room.has_data).map(async (room) => {
-    const analysis = await fetchJson(`${DATA_ROOT}/${room.room_key}/analysis.json`);
-    if (analysis && analysis.volume) analysisByRoom.set(room.room_key, analysis);
-  }));
+  state.meters = [];
+  state.emptyRooms = [];
 
-  const groups = new Map();
-  for (const room of rooms) {
-    const analysis = analysisByRoom.get(room.room_key);
-    if (!analysis) continue;
-    const name = roomGroupOf(room.room_key);
-    const group = groups.get(name) || { name, hot: null, cold: null };
-    const member = { room, analysis };
-    if (room.temperature === 'quente') group.hot = member;
-    else group.cold = member;
-    groups.set(name, group);
+  for (const entry of byKey.values()) {
+    const analysis = entry.analysis;
+    const usable = analysis && Array.isArray(analysis.daily)
+      && Number.isFinite(Number(entry.room.last_reading));
+
+    if (!usable) {
+      state.emptyRooms.push(entry.room);
+      continue;
+    }
+
+    const daily = new Map();
+    for (const row of analysis.daily) {
+      if (typeof row.date === 'string') daily.set(row.date, Number(row.liters) || 0);
+    }
+
+    state.meters.push({
+      room: entry.room,
+      daily,
+      hourlyByDay: analysis.hourly_by_day || {},
+      hourly: analysis.hourly || []
+    });
   }
 
-  if (!groups.size) {
-    analysisGrid.append(el(
-      'p', 'muted',
-      'Nenhuma análise disponível ainda — é preciso ao menos um medidor com leituras válidas.'
-    ));
+  // Os meses vem das datas que o backend apurou, nao dos arquivos em disco.
+  const months = new Set();
+  for (const meter of state.meters) {
+    for (const date of meter.daily.keys()) months.add(date.slice(0, 7));
+  }
+  state.months = [...months].sort();
+
+  if (!state.months.length) {
+    const meterGrid = document.getElementById('meter-grid');
+    meterGrid.replaceChildren();
+    for (const room of state.emptyRooms) meterGrid.append(emptyCard(room));
+    document.getElementById('forecast-grid')
+      .replaceChildren(el('p', 'muted', 'Sem leitura ainda — nada a projetar.'));
+    document.getElementById('analysis-grid')
+      .replaceChildren(el('p', 'muted', 'Nenhuma análise disponível ainda.'));
     return;
   }
 
-  for (const group of groups.values()) {
-    analysisGrid.append(analysisCard(group));
-  }
+  state.month = state.months[state.months.length - 1];
+  state.selection = { type: 'month' };
+
+  renderMonthSelect();
+  renderPeriod();
+  renderAll();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

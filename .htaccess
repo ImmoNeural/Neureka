@@ -1,0 +1,70 @@
+# =============================================================================
+# Neureka - o que o servidor NAO deve entregar
+#
+# A pasta publicada nesta hospedagem e o repositorio inteiro, entao o caminho
+# de um arquivo aqui e o endereco dele na internet. Sem este arquivo, qualquer
+# pessoa baixa o codigo digitando o nome:
+#
+#     neureka-ai.com/sync_to_site.py     -> 200, o fonte inteiro
+#     neureka-ai.com/tests/test_sync.py  -> 200
+#
+# Nao ha senha nem chave dentro desses arquivos - o problema nao e vazamento de
+# credencial, e expor a mecanica de um sistema que nao precisa ser publica.
+#
+# O que continua aberto de proposito: .html, .css, .js e os .json de
+# medicao/data/, que sao exatamente o que o painel busca para funcionar.
+#
+# Para desfazer: apague este arquivo. Nada mais depende dele.
+# =============================================================================
+
+# Sem listagem de pasta. Sem isto, uma pasta sem index vira um indice navegavel
+# de tudo que ha dentro dela.
+Options -Indexes
+
+# Pastas que nao sao conteudo. 404 em vez de 403: negar de forma explicita
+# confirma que a pasta existe, e nao ha razao para confirmar isso.
+RedirectMatch 404 ^/(tests|__pycache__)/
+
+# Arquivos ocultos - .git, .gitignore, e o proprio .htaccess.
+#
+# A excecao de .well-known nao e detalhe: e por ali que Let's Encrypt e o
+# Cloudflare validam o dominio. Bloquear essa pasta quebra a renovacao do
+# certificado, e o site cai de HTTPS meses depois sem ninguem ligar uma coisa a
+# outra.
+RedirectMatch 404 ^/\.(?!well-known)
+
+# Codigo-fonte, documentacao e sobras de edicao.
+<FilesMatch "\.(py|pyc|pyo|md|txt|log|sh|bat|yml|yaml|ini|cfg|toml|bak|orig|swp)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# As copias de seguranca que o fluxo de trabalho vai deixando:
+# sync_to_site.py.antes-hourly, app.js.antes-periodo, *.com-filtro-limpas,
+# *.anterior, *.funcionando-22h16 e o que mais aparecer no mesmo formato.
+<FilesMatch "\.(antes|com|pacing)-[A-Za-z0-9_-]+$|\.(anterior|funcionando[A-Za-z0-9_-]*)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# robots.txt volta a ser permitido: ele existe para ser lido por robo, e a
+# regra de .txt acima o teria bloqueado junto com o resto.
+<Files "robots.txt">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Allow from all
+    </IfModule>
+</Files>

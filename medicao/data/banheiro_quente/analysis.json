@@ -1,26 +1,26 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-09-17 12:28:50",
-    "hours": 422.3
+    "to": "2026-09-17 17:33:15",
+    "hours": 427.4
   },
   "coverage": {
-    "observed_minutes": 6718,
-    "gap_minutes": 18620,
+    "observed_minutes": 6762,
+    "gap_minutes": 18881,
     "absence_minutes": 12570,
-    "outage_minutes": 6050,
-    "observed_pct": 26.5,
-    "observed_pct_excl_absence": 52.6,
-    "gap_count": 21,
+    "outage_minutes": 6311,
+    "observed_pct": 26.4,
+    "observed_pct_excl_absence": 51.7,
+    "gap_count": 22,
     "absence_count": 1,
-    "outage_count": 20
+    "outage_count": 21
   },
   "volume": {
     "total_liters": 847,
-    "observed_liters": 508,
-    "gap_liters": 339,
+    "observed_liters": 503,
+    "gap_liters": 344,
     "absence_liters": 115,
-    "outage_liters": 224
+    "outage_liters": 229
   },
   "gaps": [
     {
@@ -66,17 +66,17 @@
       "kind": "outage"
     },
     {
+      "from": "2026-09-17 12:28:50",
+      "to": "2026-09-17 16:49:48",
+      "hours": 4.3,
+      "liters": 5,
+      "kind": "outage"
+    },
+    {
       "from": "2026-09-16 07:49:13",
       "to": "2026-09-16 12:01:39",
       "hours": 4.2,
       "liters": 40,
-      "kind": "outage"
-    },
-    {
-      "from": "2026-09-02 13:22:51",
-      "to": "2026-09-02 17:26:35",
-      "hours": 4.1,
-      "liters": 4,
       "kind": "outage"
     }
   ],
@@ -192,8 +192,8 @@
     {
       "date": "2026-09-17",
       "liters": 15,
-      "gap_liters": 15,
-      "observed_pct": 63.7
+      "gap_liters": 20,
+      "observed_pct": 49.4
     }
   ],
   "hourly": [
@@ -295,14 +295,14 @@
     },
     {
       "hour": 16,
-      "liters": 11,
-      "observed_minutes": 240,
-      "liters_per_observed_hour": 2.63
+      "liters": 9,
+      "observed_minutes": 250,
+      "liters_per_observed_hour": 2.24
     },
     {
       "hour": 17,
       "liters": 0,
-      "observed_minutes": 240,
+      "observed_minutes": 273,
       "liters_per_observed_hour": 0.0
     },
     {
@@ -646,8 +646,8 @@
       0,
       0,
       0,
-      0,
-      0,
+      -1,
+      -4,
       0,
       0,
       0,

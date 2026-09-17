@@ -106,16 +106,95 @@ class CleanReadingsTest(unittest.TestCase):
         self.assertEqual([r.reading_m3 for r in result.readings], [134.463])
 
     def test_rate_guard_allows_realistic_shower_draw(self) -> None:
-        """17 L/min is a genuine draw and must survive."""
+        """17 L/min is a genuine draw and must survive.
+
+        As tres leituras do fim nao sao enfeite: 61 L passa de
+        SALTO_SUSPEITO_LITROS, entao o salto so e publicado depois que elas
+        confirmam que o relogio ficou la em cima.
+        """
         result = sync.clean_readings(
             frame(
                 [
                     ("2026-08-30 22:32:34", 134.424),
                     ("2026-08-30 22:36:07", 134.485),  # 61 L in 3.55 min = 17.2 L/min
+                    ("2026-08-30 22:46:00", 134.485),
+                    ("2026-08-30 22:56:00", 134.486),
+                    ("2026-08-30 23:06:00", 134.486),
                 ]
             )
         )
         self.assertEqual(result.rejected_total, 0)
+        self.assertEqual(result.pendente_confirmacao, 0)
+        self.assertEqual(len(result.readings), 5)
+
+    def test_shower_is_held_until_three_readings_confirm_it(self) -> None:
+        """Um salto real, mas recente demais, espera em vez de ser publicado."""
+        result = sync.clean_readings(
+            frame(
+                [
+                    ("2026-08-30 22:32:34", 134.424),
+                    ("2026-08-30 22:36:07", 134.485),
+                ]
+            )
+        )
+        # Retido, nao rejeitado: a diferenca importa, porque na proxima rodada
+        # ele volta a ser avaliado com as leituras que faltavam.
+        self.assertEqual(result.rejected_spike, 0)
+        self.assertEqual(result.pendente_confirmacao, 1)
+        self.assertEqual(len(result.readings), 1)
+
+    def test_spike_contradicted_by_the_next_reading_is_dropped(self) -> None:
+        """O caso real de 17/09: sobe 420 L e a leitura seguinte volta."""
+        result = sync.clean_readings(
+            frame(
+                [
+                    ("2026-09-17 09:14:00", 187.045),
+                    ("2026-09-17 09:36:00", 187.045),
+                    ("2026-09-17 09:58:00", 187.465),  # +420 L -- misread
+                    ("2026-09-17 10:20:00", 187.045),
+                    ("2026-09-17 10:42:00", 187.045),
+                    ("2026-09-17 11:03:00", 187.045),
+                ]
+            )
+        )
+        self.assertEqual(result.rejected_spike, 1)
+        self.assertNotIn(187.465, [r.reading_m3 for r in result.readings])
+        # O pico sai e os vizinhos ficam.
+        self.assertEqual(len(result.readings), 5)
+
+    def test_slow_misread_under_the_rate_ceiling_is_caught(self) -> None:
+        """O buraco que existia: 430 L em 72 min dao 5,97 L/min e passavam.
+
+        O guarda de vazao pergunta se a agua CABE no tempo decorrido. Diluido
+        num intervalo longo, um misread grande cabe. Quem pega e a confirmacao.
+        """
+        result = sync.clean_readings(
+            frame(
+                [
+                    ("2026-09-15 19:12:00", 135.125),
+                    ("2026-09-15 20:24:00", 135.555),  # +430 L em 72 min
+                    ("2026-09-15 20:46:00", 135.153),
+                    ("2026-09-15 21:08:00", 135.153),
+                    ("2026-09-15 21:30:00", 135.153),
+                ]
+            )
+        )
+        self.assertEqual(result.rejected_rate, 0, "a vazao nao pega este caso")
+        self.assertEqual(result.rejected_spike, 1, "a confirmacao pega")
+        self.assertNotIn(135.555, [r.reading_m3 for r in result.readings])
+
+    def test_small_rise_is_published_without_waiting(self) -> None:
+        """Abaixo do limite nao ha quarentena: o caso comum segue direto."""
+        result = sync.clean_readings(
+            frame(
+                [
+                    ("2026-08-30 22:00:00", 134.000),
+                    ("2026-08-30 22:10:00", 134.015),  # +15 L
+                ]
+            )
+        )
+        self.assertEqual(result.rejected_total, 0)
+        self.assertEqual(result.pendente_confirmacao, 0)
         self.assertEqual(len(result.readings), 2)
 
     def test_absolute_jump_guard_bounds_long_outage(self) -> None:
@@ -578,12 +657,19 @@ class ProcessRoomTest(unittest.TestCase):
         path = self.root / sync.EXCEL_FILENAME
         pd.DataFrame(
             {
+                # As tres ultimas confirmam o salto de 25 L das 22:10 -- sem elas
+                # ele ficaria retido e latest.json pararia em 134.020.
                 sync.COL_TIMESTAMP: [
                     "2026-08-30 22:00:00",
                     "2026-08-30 22:05:00",
                     "2026-08-30 22:10:00",
+                    "2026-08-30 22:15:00",
+                    "2026-08-30 22:20:00",
+                    "2026-08-30 22:25:00",
                 ],
-                sync.COL_READING: [134.000, 134.020, 134.045],
+                sync.COL_READING: [
+                    134.000, 134.020, 134.045, 134.045, 134.045, 134.046,
+                ],
             }
         ).to_excel(path, index=False)
 
@@ -595,8 +681,8 @@ class ProcessRoomTest(unittest.TestCase):
             self.assertTrue((room_dir / name).exists(), f"{name} missing")
 
         latest = json.loads((room_dir / "latest.json").read_text(encoding="utf-8"))
-        self.assertEqual(latest["reading"], 134.045)
-        self.assertEqual(latest["timestamp"], "2026-08-30 22:10:00")
+        self.assertEqual(latest["reading"], 134.046)
+        self.assertEqual(latest["timestamp"], "2026-08-30 22:25:00")
 
     def test_empty_workbook_reports_no_data(self) -> None:
         path = self.root / sync.EXCEL_FILENAME

@@ -178,6 +178,34 @@ REANCHOR_AFTER = 3
 # litres of each other is not something the failure mode produces.
 REANCHOR_SPREAD_M3 = 0.05
 
+# ---------------------------------------------------------------------------
+# Quarantine for a big jump: confirm it before publishing it
+# ---------------------------------------------------------------------------
+
+# A rise above this is not published on the spot -- it waits for the readings that
+# come after it to agree.
+#
+# Why an ABSOLUTE ceiling was missing. MAX_FLOW_RATE_LITERS_PER_MIN asks "could
+# this much water fit in the elapsed time", so a big misread spread over a long
+# interval slips underneath it: on 2026-09-15 the hot meter jumped 430 L over 72
+# minutes, which is 5.97 L/min, comfortably below the 20 L/min ceiling. It was
+# accepted, and the next reading came back 402 L lower.
+#
+# 20 L is deliberately low -- a real shower clears it easily. That is fine,
+# because crossing this line DELAYS a reading, it never rejects one. A genuine
+# draw is published one run later, with its timestamp intact.
+SALTO_SUSPEITO_LITROS = 20.0
+
+# How many readings after the jump have to agree before it is published.
+#
+# The rule is the meter's own physics, not a heuristic: a cumulative meter cannot
+# run backwards, so if the readings that follow a jump sit BELOW it, the jump
+# never happened and what we saw was a misread. Three readings at the current
+# cadence is about an hour -- slower than the hourly publish, which is why a
+# still-unconfirmed jump simply waits for the next run instead of being decided
+# on thin evidence.
+CONFIRMAR_SALTO_EM = 3
+
 # Two consecutive readings closer together in time than this (and still rising) are
 # considered the same continuous draw. Must exceed the camera's capture cadence
 # (~5-10 min) or every single reading becomes its own session.
@@ -269,6 +297,11 @@ class CleanResult:
     rejected_backwards: int
     rejected_jump: int
     rejected_rate: int
+    # Jumps the readings after them contradicted, plus jumps still too recent to
+    # have been confirmed. Counted apart because the two mean different things:
+    # the first is a misread caught, the second is only a reading waiting its turn.
+    rejected_spike: int = 0
+    pendente_confirmacao: int = 0
 
     @property
     def rejected_total(self) -> int:
@@ -277,6 +310,7 @@ class CleanResult:
             + self.rejected_backwards
             + self.rejected_jump
             + self.rejected_rate
+            + self.rejected_spike
         )
 
 
@@ -394,6 +428,8 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
     rejected_backwards = 0
     rejected_jump = 0
     rejected_rate = 0
+    rejected_spike = 0
+    pendente_confirmacao = 0
     last_good_m3: float | None = None
     last_good_ts: datetime | None = None
     # Backwards-rejected readings still waiting to see whether the next ones agree
@@ -401,7 +437,11 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
     # settled -- by corroboration (they win) or by a normal acceptance (they lose).
     pending_backwards: list[tuple[datetime, float]] = []
 
-    for timestamp, reading_m3 in zip(working["_ts"], working["_reading"]):
+    # Materialised instead of streamed: confirming a jump means reading the samples
+    # that come AFTER it, which a zip() cursor cannot do.
+    amostras = list(zip(working["_ts"], working["_reading"]))
+
+    for indice, (timestamp, reading_m3) in enumerate(amostras):
         value = float(reading_m3)
         moment = timestamp.to_pydatetime()
 
@@ -445,6 +485,31 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
                     rejected_rate += 1
                     continue
 
+            # ---- quarentena do salto grande ----
+            #
+            # Passou pelos guardas acima e ainda assim subiu muito de uma vez. A
+            # pergunta que decide nao esta neste par de leituras, e sim nas que
+            # vierem depois: o relogio e acumulado, entao se ele DESCE abaixo deste
+            # valor, a agua nunca passou e o que vimos foi erro de leitura.
+            #
+            # Nao ha voto nem media aqui de proposito. Uma unica leitura posterior
+            # mais baixa ja e prova fisica suficiente - foi assim que o pico de
+            # 420 L de 17/09 09:58 se denunciou na leitura das 10:20.
+            if (value - last_good_m3) * 1000.0 > SALTO_SUSPEITO_LITROS:
+                seguintes = [
+                    float(v)
+                    for _, v in amostras[indice + 1: indice + 1 + CONFIRMAR_SALTO_EM]
+                ]
+                if len(seguintes) < CONFIRMAR_SALTO_EM:
+                    # Recente demais para julgar. Fica de fora desta publicacao e e
+                    # reavaliado na proxima rodada, quando as leituras existirem -
+                    # o clean roda sobre o historico inteiro toda vez.
+                    pendente_confirmacao += 1
+                    continue
+                if any(s < value - BACKWARDS_TOLERANCE_M3 for s in seguintes):
+                    rejected_spike += 1
+                    continue
+
         # A normal acceptance settles the question: the readings held back before it
         # never found corroboration, so they were genuine rejections after all.
         rejected_backwards += len(pending_backwards)
@@ -470,6 +535,8 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
         rejected_backwards=rejected_backwards,
         rejected_jump=rejected_jump,
         rejected_rate=rejected_rate,
+        rejected_spike=rejected_spike,
+        pendente_confirmacao=pendente_confirmacao,
     )
 
 

@@ -295,9 +295,9 @@
     },
     {
       "hour": 16,
-      "liters": 9,
+      "liters": 8,
       "observed_minutes": 250,
-      "liters_per_observed_hour": 2.24
+      "liters_per_observed_hour": 1.95
     },
     {
       "hour": 17,
@@ -646,8 +646,8 @@
       0,
       0,
       0,
-      -1,
-      -4,
+      -2,
+      -3,
       0,
       0,
       0,

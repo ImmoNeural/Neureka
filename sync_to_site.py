@@ -1018,7 +1018,11 @@ def process_room(room_key: str, source: Path, logger: RunLogger) -> RoomResult:
         f"room={room_key} status=ok rows_read={clean.rows_read} "
         f"accepted={len(clean.readings)} rejected={clean.rejected_total} "
         f"(unparsable={clean.rejected_unparsable} backwards={clean.rejected_backwards} "
-        f"jump={clean.rejected_jump} rate={clean.rejected_rate}) sessions={len(sessions)} "
+        f"jump={clean.rejected_jump} rate={clean.rejected_rate} "
+        # spike e o guarda de confirmacao; aguardando sao os saltos recentes
+        # demais para julgar, que voltam a ser avaliados na proxima rodada.
+        f"spike={clean.rejected_spike}) aguardando={clean.pendente_confirmacao} "
+        f"sessions={len(sessions)} "
         f"banhos={sum(1 for s in sessions if s.session_type == 'banho')} "
         f"descargas={sum(1 for s in sessions if s.session_type == 'descarga')} "
         f"outages={outages} months={','.join(months) or '-'} "

@@ -3,35 +3,35 @@
     "date": "2026-09-13",
     "session_count": 12,
     "banho_count": 0,
-    "descarga_count": 11,
-    "total_liters": 105,
+    "descarga_count": 12,
+    "total_liters": 73,
     "avg_liters_per_banho": 0.0,
-    "avg_liters_per_descarga": 5.9
+    "avg_liters_per_descarga": 6.1
   },
   {
     "date": "2026-09-14",
-    "session_count": 12,
+    "session_count": 11,
     "banho_count": 0,
     "descarga_count": 9,
-    "total_liters": 155,
+    "total_liters": 90,
     "avg_liters_per_banho": 0.0,
     "avg_liters_per_descarga": 5.8
   },
   {
     "date": "2026-09-15",
-    "session_count": 7,
+    "session_count": 6,
     "banho_count": 0,
-    "descarga_count": 4,
-    "total_liters": 174,
+    "descarga_count": 5,
+    "total_liters": 51,
     "avg_liters_per_banho": 0.0,
-    "avg_liters_per_descarga": 4.5
+    "avg_liters_per_descarga": 3.8
   },
   {
     "date": "2026-09-16",
-    "session_count": 8,
+    "session_count": 6,
     "banho_count": 0,
     "descarga_count": 6,
-    "total_liters": 87,
+    "total_liters": 47,
     "avg_liters_per_banho": 0.0,
     "avg_liters_per_descarga": 7.8
   }

@@ -60,7 +60,7 @@ function novoNo(tag) {
 const porId = new Map();
 for (const id of ['sync-banner', 'sync-value', 'global-alert', 'month-select',
                   'day-grid', 'span-grid', 'meter-grid', 'forecast-grid',
-                  'analysis-grid']) {
+                  'analysis-grid', 'discard-box']) {
   porId.set(id, novoNo('div'));
 }
 
@@ -239,6 +239,36 @@ setTimeout(() => {
    * O medidor e o PRIMEIRO grafico desenhado em cada rodada de renderAll, entao
    * graficos[0] e sempre o card do primeiro medidor.
    */
+  /*
+   * O registro de descartes. renderDiscards() e assincrono e roda depois do
+   * resto do painel, entao a caixa e conferida aqui, no fim, quando ja teve
+   * tempo de preencher.
+   */
+  console.log('\nregistro de leituras descartadas');
+
+  const caixa = porId.get('discard-box');
+  const registro = caixa.textContent || '';
+
+  check('a caixa de descartes foi preenchida', caixa.children.length > 0,
+    `${caixa.children.length} filhos`);
+
+  check('diz quantas leituras foram descartadas',
+    /\d+\s*leituras? descartadas? no hist/i.test(registro),
+    registro.slice(0, 120));
+
+  check('cada descarte traz data, valor e motivo', (() => {
+    // A lista e o <ul>; procura qualquer filho que tenha itens dentro.
+    const listas = caixa.children.filter((c) => c.tagName === 'ul');
+    if (!listas.length || !listas[0].children.length) return false;
+    const primeiro = listas[0].children[0].textContent || '';
+    return /\d{2}\/\d{2}\/\d{4}/.test(primeiro) && /m³/.test(primeiro);
+  })());
+
+  check('nao mostra mais do que o limite de itens', (() => {
+    const listas = caixa.children.filter((c) => c.tagName === 'ul');
+    return listas.every((l) => l.children.length <= 12);
+  })());
+
   console.log('\ntipo de grafico do medidor (a queixa)');
 
   const tipoDoMedidor = () => {

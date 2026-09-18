@@ -1034,6 +1034,118 @@ function analysisCard(group) {
   return card;
 }
 
+/* --------------------------------------------------- leituras descartadas
+
+   Um numero retirado da serie e uma decisao, e decisao invisivel nao pode ser
+   contestada. Esta secao mostra o que o filtro tirou, quando, e por que - se
+   algum dia ele errar, e aqui que da para ver.
+
+   O arquivo vem da varredura diaria e pode nao existir (antes da primeira
+   execucao, ou num deploy novo). Nesse caso a secao se explica em vez de
+   mostrar erro.
+*/
+
+// Quantos descartes listar. O resto vira contagem: a lista existe para dar
+// visibilidade, nao para ser um banco de dados navegavel.
+const DESCARTES_VISIVEIS = 12;
+
+function labelDoMedidor(roomKey) {
+  const meter = state.meters.find((m) => m.room.room_key === roomKey);
+  if (meter) return meter.room.label;
+  const vazio = state.emptyRooms.find((r) => r.room_key === roomKey);
+  return vazio ? vazio.label : roomKey;
+}
+
+function linhaDescarte(entrada, roomKey) {
+  const item = el('li', 'descarte');
+
+  const at = parseStamp(entrada.timestamp);
+  item.append(el('span', 'descarte__quando', at ? formatDateTime(at) : entrada.timestamp));
+  item.append(el('span', 'descarte__valor', `${Number(entrada.leitura).toFixed(3)} m³`));
+  item.append(el('span', 'descarte__onde', labelDoMedidor(roomKey)));
+  item.append(el('span', 'descarte__motivo', entrada.motivo));
+  item.append(el('p', 'descarte__detalhe', entrada.detalhe));
+
+  return item;
+}
+
+async function renderDiscards() {
+  const box = document.getElementById('discard-box');
+  if (!box) return;
+  box.replaceChildren();
+
+  const registro = await fetchJson(`${DATA_ROOT}/descartes.json`);
+
+  if (!registro || !Array.isArray(registro.medidores)) {
+    box.append(el(
+      'p', 'muted',
+      'O registro ainda não foi gerado — ele é escrito pela varredura das 11:59.'
+    ));
+    return;
+  }
+
+  // Achatado e ordenado por data, para "o que caiu hoje" ficar no topo
+  // independentemente de qual medidor produziu.
+  const todos = [];
+  for (const medidor of registro.medidores) {
+    for (const entrada of medidor.descartes || []) {
+      todos.push({ entrada, roomKey: medidor.room_key });
+    }
+  }
+  todos.sort((a, b) => String(b.entrada.timestamp).localeCompare(String(a.entrada.timestamp)));
+
+  if (!todos.length) {
+    box.append(el('p', 'muted', 'Nenhuma leitura descartada — o OCR não errou desde o início da série.'));
+    return;
+  }
+
+  const resumo = el('p', 'descarte__resumo');
+  resumo.append(el('strong', null, String(todos.length)));
+  resumo.append(document.createTextNode(
+    todos.length === 1 ? ' leitura descartada no histórico' : ' leituras descartadas no histórico'
+  ));
+  const geradoEm = parseStamp(registro.gerado_em);
+  if (geradoEm) {
+    resumo.append(document.createTextNode(` · revisado em ${formatDateTime(geradoEm)}`));
+  }
+  box.append(resumo);
+
+  const lista = el('ul', 'descartes');
+  for (const { entrada, roomKey } of todos.slice(0, DESCARTES_VISIVEIS)) {
+    lista.append(linhaDescarte(entrada, roomKey));
+  }
+  box.append(lista);
+
+  if (todos.length > DESCARTES_VISIVEIS) {
+    box.append(el(
+      'p', 'card__note',
+      `Mostrando as ${DESCARTES_VISIVEIS} mais recentes. As outras ` +
+      `${todos.length - DESCARTES_VISIVEIS} estão em data/descartes.json.`
+    ));
+  }
+
+  // Subidas que passaram pelos guardas e ainda parecem grandes. Nao foram
+  // removidas de proposito: um banho tambem produz subida grande, e essa
+  // distincao e de quem conhece a casa.
+  const conferir = registro.medidores.flatMap((m) =>
+    (m.conferir || []).map((c) => ({ ...c, roomKey: m.room_key })));
+
+  if (conferir.length) {
+    box.append(el('h4', 'card__subtitle', 'Grandes, mas mantidas — vale conferir'));
+    const lista2 = el('ul', 'descartes');
+    for (const c of conferir.slice(0, 6)) {
+      const item = el('li', 'descarte descarte--manter');
+      const at = parseStamp(c.timestamp);
+      item.append(el('span', 'descarte__quando', at ? formatDateTime(at) : c.timestamp));
+      item.append(el('span', 'descarte__valor', `+${formatLiters(c.litros)} L`));
+      item.append(el('span', 'descarte__onde', labelDoMedidor(c.roomKey)));
+      item.append(el('p', 'descarte__detalhe', c.detalhe));
+      lista2.append(item);
+    }
+    box.append(lista2);
+  }
+}
+
 /* --------------------------------------------------------------- the banner */
 
 function updateBanner(rooms) {
@@ -1311,6 +1423,12 @@ async function init() {
   renderMonthSelect();
   renderPeriod();
   renderAll();
+
+  // Depois do resto: o registro depende dos rotulos montados acima, e um
+  // arquivo ausente nao pode atrasar o painel inteiro.
+  renderDiscards().catch((error) => {
+    console.warn('registro de descartes indisponivel:', error);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

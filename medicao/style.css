@@ -712,3 +712,95 @@ code {
 @media (max-width: 430px) {
   .tiles { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   Leituras descartadas
+
+   Deliberadamente sobrio: e um registro de auditoria, nao um alarme. Vermelho
+   e peso grafico dariam a impressao de que algo esta quebrado, quando o filtro
+   estar trabalhando e justamente o sistema funcionando.
+   ========================================================================== */
+
+.descarte__resumo {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.descarte__resumo strong {
+  font-family: var(--font-num);
+  font-size: 17px;
+  color: var(--text);
+}
+
+.descartes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.descarte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 12px;
+  padding: 11px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.descarte__quando {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.descarte__valor {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.descarte__onde {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+/* A etiqueta do motivo: presente, mas sem gritar. */
+.descarte__motivo {
+  margin-left: auto;
+  padding: 2px 9px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--warn);
+  background: rgba(251, 191, 36, .1);
+  border: 1px solid rgba(251, 191, 36, .25);
+  border-radius: 999px;
+}
+
+.descarte__detalhe {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+/* Mantidas, nao removidas - o contorno tracejado diz "em aberto". */
+.descarte--manter {
+  border-style: dashed;
+  background: transparent;
+}
+
+.descarte--manter .descarte__valor { color: var(--cold); }
+
+@media (max-width: 560px) {
+  .descarte__motivo { margin-left: 0; }
+}

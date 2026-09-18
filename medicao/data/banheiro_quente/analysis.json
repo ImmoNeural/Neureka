@@ -1,26 +1,26 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-09-18 02:41:34",
-    "hours": 436.5
+    "to": "2026-09-18 09:50:58",
+    "hours": 443.7
   },
   "coverage": {
-    "observed_minutes": 7000,
-    "gap_minutes": 19191,
+    "observed_minutes": 7044,
+    "gap_minutes": 19577,
     "absence_minutes": 12570,
-    "outage_minutes": 6621,
-    "observed_pct": 26.7,
-    "observed_pct_excl_absence": 51.4,
-    "gap_count": 26,
+    "outage_minutes": 7006,
+    "observed_pct": 26.5,
+    "observed_pct_excl_absence": 50.1,
+    "gap_count": 28,
     "absence_count": 1,
-    "outage_count": 25
+    "outage_count": 27
   },
   "volume": {
-    "total_liters": 861,
+    "total_liters": 882,
     "observed_liters": 540,
-    "gap_liters": 321,
+    "gap_liters": 342,
     "absence_liters": 115,
-    "outage_liters": 206
+    "outage_liters": 227
   },
   "gaps": [
     {
@@ -66,17 +66,17 @@
       "kind": "outage"
     },
     {
+      "from": "2026-09-18 02:41:34",
+      "to": "2026-09-18 08:01:27",
+      "hours": 5.3,
+      "liters": 21,
+      "kind": "outage"
+    },
+    {
       "from": "2026-09-17 12:28:50",
       "to": "2026-09-17 16:49:48",
       "hours": 4.3,
       "liters": 5,
-      "kind": "outage"
-    },
-    {
-      "from": "2026-09-16 07:49:13",
-      "to": "2026-09-16 12:01:39",
-      "hours": 4.2,
-      "liters": 40,
       "kind": "outage"
     }
   ],
@@ -197,9 +197,9 @@
     },
     {
       "date": "2026-09-18",
-      "liters": 0,
-      "gap_liters": 0,
-      "observed_pct": 39.6
+      "liters": 20,
+      "gap_liters": 20,
+      "observed_pct": 18.3
     }
   ],
   "hourly": [
@@ -254,14 +254,14 @@
     {
       "hour": 8,
       "liters": 0,
-      "observed_minutes": 139,
+      "observed_minutes": 161,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 9,
       "liters": 17,
-      "observed_minutes": 129,
-      "liters_per_observed_hour": 7.69
+      "observed_minutes": 151,
+      "liters_per_observed_hour": 6.57
     },
     {
       "hour": 10,

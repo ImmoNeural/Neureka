@@ -302,6 +302,11 @@ class CleanResult:
     # the first is a misread caught, the second is only a reading waiting its turn.
     rejected_spike: int = 0
     pendente_confirmacao: int = 0
+    # Cada leitura descartada por um guarda FISICO, com o porque. Existe para a
+    # varredura diaria poder dizer "sumi com este pico, deste dia, deste horario"
+    # em vez de so publicar uma contagem. Nao inclui as ilegiveis: aquelas nunca
+    # chegaram a ser um numero, entao nao ha o que registrar.
+    descartes: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def rejected_total(self) -> int:
@@ -430,6 +435,16 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
     rejected_rate = 0
     rejected_spike = 0
     pendente_confirmacao = 0
+    descartes: list[dict[str, Any]] = []
+
+    def anotar(quando: datetime, valor: float, motivo: str, detalhe: str) -> None:
+        """Guarda o que foi descartado, para a varredura diaria poder listar."""
+        descartes.append({
+            "timestamp": quando.strftime(TIMESTAMP_FORMAT),
+            "leitura": round(valor, 3),
+            "motivo": motivo,
+            "detalhe": detalhe,
+        })
     last_good_m3: float | None = None
     last_good_ts: datetime | None = None
     # Backwards-rejected readings still waiting to see whether the next ones agree
@@ -474,6 +489,11 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
                 continue
             if value - last_good_m3 > MAX_PLAUSIBLE_JUMP_M3:
                 rejected_jump += 1
+                anotar(
+                    moment, value, "salto absurdo",
+                    f"subiu {(value - last_good_m3) * 1000:.0f} L de uma vez, acima "
+                    f"do teto de {MAX_PLAUSIBLE_JUMP_M3 * 1000:.0f} L",
+                )
                 continue
 
             elapsed_minutes = (moment - last_good_ts).total_seconds() / 60.0
@@ -483,6 +503,12 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
                 litres_gained = (value - last_good_m3) * 1000.0
                 if litres_gained / elapsed_minutes > MAX_FLOW_RATE_LITERS_PER_MIN:
                     rejected_rate += 1
+                    anotar(
+                        moment, value, "vazao impossivel",
+                        f"exigiria {litres_gained / elapsed_minutes:.1f} L/min desde "
+                        f"{last_good_m3:.3f}, acima do teto de "
+                        f"{MAX_FLOW_RATE_LITERS_PER_MIN:.0f} L/min",
+                    )
                     continue
 
             # ---- quarentena do salto grande ----
@@ -506,8 +532,15 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
                     # o clean roda sobre o historico inteiro toda vez.
                     pendente_confirmacao += 1
                     continue
-                if any(s < value - BACKWARDS_TOLERANCE_M3 for s in seguintes):
+                contradiz = [s for s in seguintes if s < value - BACKWARDS_TOLERANCE_M3]
+                if contradiz:
                     rejected_spike += 1
+                    anotar(
+                        moment, value, "pico contradito",
+                        f"subiu {(value - last_good_m3) * 1000:.0f} L sobre "
+                        f"{last_good_m3:.3f}, mas as leituras seguintes voltaram "
+                        f"para {min(contradiz):.3f} - o relogio nao anda para tras",
+                    )
                     continue
 
         # A normal acceptance settles the question: the readings held back before it
@@ -537,6 +570,7 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
         rejected_rate=rejected_rate,
         rejected_spike=rejected_spike,
         pendente_confirmacao=pendente_confirmacao,
+        descartes=descartes,
     )
 
 

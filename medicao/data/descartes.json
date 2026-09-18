@@ -1,0 +1,345 @@
+{
+  "gerado_em": "2026-09-18T10:36:01.153401+02:00",
+  "criterio": {
+    "salto_suspeito_litros": 20.0,
+    "confirmar_salto_em": 3,
+    "subida_para_conferir_litros": 150.0
+  },
+  "total_descartes": 52,
+  "total_conferir": 0,
+  "medidores": [
+    {
+      "room_key": "banheiro_quente",
+      "aceitas": 403,
+      "descartes": [
+        {
+          "timestamp": "2026-08-30 22:25:10",
+          "leitura": 134.641,
+          "motivo": "vazao impossivel",
+          "detalhe": "exigiria 54.2 L/min desde 134.463, acima do teto de 20 L/min"
+        },
+        {
+          "timestamp": "2026-09-02 08:17:35",
+          "leitura": 1344.411,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 1209772 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-13 12:59:58",
+          "leitura": 135.07,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 25 L sobre 135.045, mas as leituras seguintes voltaram para 135.045 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-13 13:22:02",
+          "leitura": 135.075,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 30 L sobre 135.045, mas as leituras seguintes voltaram para 135.045 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-13 13:44:02",
+          "leitura": 135.07,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 25 L sobre 135.045, mas as leituras seguintes voltaram para 135.045 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-13 14:26:14",
+          "leitura": 135.105,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 60 L sobre 135.045, mas as leituras seguintes voltaram para 135.045 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-14 21:57:06",
+          "leitura": 135.115,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 21 L sobre 135.094, mas as leituras seguintes voltaram para 135.095 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-15 20:24:22",
+          "leitura": 135.555,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 430 L sobre 135.125, mas as leituras seguintes voltaram para 135.153 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-16 06:15:43",
+          "leitura": 135.545,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 391 L sobre 135.154, mas as leituras seguintes voltaram para 135.154 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-17 03:40:43",
+          "leitura": 135.444,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 149 L sobre 135.295, mas as leituras seguintes voltaram para 135.295 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-17 06:12:39",
+          "leitura": 135.394,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 97 L sobre 135.297, mas as leituras seguintes voltaram para 135.295 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-17 07:58:47",
+          "leitura": 135.318,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 23 L sobre 135.295, mas as leituras seguintes voltaram para 135.310 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-17 08:18:56",
+          "leitura": 135.415,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 120 L sobre 135.295, mas as leituras seguintes voltaram para 135.310 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-17 18:27:41",
+          "leitura": 1353.215,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 1217868 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-17 19:01:05",
+          "leitura": 1353.215,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 1217868 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-17 19:11:07",
+          "leitura": 1353.215,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 1217868 L de uma vez, acima do teto de 5000 L"
+        }
+      ],
+      "conferir": []
+    },
+    {
+      "room_key": "banheiro_fria",
+      "aceitas": 398,
+      "descartes": [
+        {
+          "timestamp": "2026-09-13 16:37:03",
+          "leitura": 186.397,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 37 L sobre 186.360, mas as leituras seguintes voltaram para 186.379 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-13 23:45:55",
+          "leitura": 186.44,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 32 L sobre 186.408, mas as leituras seguintes voltaram para 186.405 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-14 02:33:06",
+          "leitura": 186.64,
+          "motivo": "vazao impossivel",
+          "detalhe": "exigiria 23.5 L/min desde 186.405, acima do teto de 20 L/min"
+        },
+        {
+          "timestamp": "2026-09-14 02:53:08",
+          "leitura": 186.47,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 65 L sobre 186.405, mas as leituras seguintes voltaram para 186.400 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-14 03:53:10",
+          "leitura": 186.64,
+          "motivo": "vazao impossivel",
+          "detalhe": "exigiria 23.5 L/min desde 186.405, acima do teto de 20 L/min"
+        },
+        {
+          "timestamp": "2026-09-14 06:25:38",
+          "leitura": 186.64,
+          "motivo": "vazao impossivel",
+          "detalhe": "exigiria 24.0 L/min desde 186.400, acima do teto de 20 L/min"
+        },
+        {
+          "timestamp": "2026-09-14 06:55:41",
+          "leitura": 186.64,
+          "motivo": "vazao impossivel",
+          "detalhe": "exigiria 23.0 L/min desde 186.408, acima do teto de 20 L/min"
+        },
+        {
+          "timestamp": "2026-09-14 07:36:31",
+          "leitura": 186.67,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 30 L sobre 186.640, mas as leituras seguintes voltaram para 186.640 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-15 18:39:09",
+          "leitura": 186.76,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 91 L sobre 186.669, mas as leituras seguintes voltaram para 186.725 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-15 18:49:27",
+          "leitura": 186.771,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 102 L sobre 186.669, mas as leituras seguintes voltaram para 186.725 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-15 23:25:04",
+          "leitura": 186.775,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 21 L sobre 186.754, mas as leituras seguintes voltaram para 186.755 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-16 03:58:55",
+          "leitura": 186.775,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 20 L sobre 186.755, mas as leituras seguintes voltaram para 186.750 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-16 06:55:18",
+          "leitura": 186.775,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 20 L sobre 186.755, mas as leituras seguintes voltaram para 186.755 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-17 09:58:17",
+          "leitura": 187.465,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 420 L sobre 187.045, mas as leituras seguintes voltaram para 187.045 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-18 02:11:23",
+          "leitura": 187.213,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 78 L sobre 187.135, mas as leituras seguintes voltaram para 187.133 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-18 03:17:36",
+          "leitura": 187.213,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 80 L sobre 187.133, mas as leituras seguintes voltaram para 187.130 - o relogio nao anda para tras"
+        }
+      ],
+      "conferir": []
+    },
+    {
+      "room_key": "cozinha_quente",
+      "aceitas": 1,
+      "descartes": [
+        {
+          "timestamp": "2026-09-16 17:23:51",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 17:28:01",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 17:48:12",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 18:10:11",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 18:17:23",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 18:39:19",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 18:54:02",
+          "leitura": 134.465,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109370 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 19:49:22",
+          "leitura": 135.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 110368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 19:50:48",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 19:52:49",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 20:02:02",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 20:06:39",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 20:11:15",
+          "leitura": 134.465,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109370 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 21:01:01",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 21:11:43",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 21:27:22",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 21:56:43",
+          "leitura": 134.469,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109374 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 22:12:24",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 22:30:26",
+          "leitura": 134.465,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109370 L de uma vez, acima do teto de 5000 L"
+        },
+        {
+          "timestamp": "2026-09-16 22:34:23",
+          "leitura": 134.463,
+          "motivo": "salto absurdo",
+          "detalhe": "subiu 109368 L de uma vez, acima do teto de 5000 L"
+        }
+      ],
+      "conferir": []
+    }
+  ]
+}

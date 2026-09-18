@@ -804,3 +804,6 @@ code {
 @media (max-width: 560px) {
   .descarte__motivo { margin-left: 0; }
 }
+
+/* Nota secundaria dentro de um card: contexto, nao informacao principal. */
+.card__note--faint { color: var(--text-faint); font-size: 11.5px; }

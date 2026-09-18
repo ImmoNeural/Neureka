@@ -767,7 +767,12 @@ function meterCard(meter) {
 
 /* ------------------------------------------------------------ previsao do mes
 
-   Extrapolacao linear a partir de QUATRO DIAS SEGUIDOS de medicao.
+   Extrapolacao linear a partir de TODOS os dias seguidos ja medidos.
+
+   A janela nao tem tamanho fixo: ela comeca no minimo de quatro dias e cresce
+   a cada dia novo com leitura. Precisao de extrapolacao linear e quase toda
+   tamanho de amostra, entao a projecao aperta sozinha conforme a serie anda,
+   sem ninguem ajustar nada.
 
    Por que uma janela fixa e continua, e nao o mes todo ate hoje. Dividir o
    acumulado pelos dias decorridos parece mais completo e e pior: os dias em que
@@ -775,53 +780,93 @@ function meterCard(meter) {
    diaria despenca. Na serie real da agua quente, metade do mes esta em lacuna -
    a projecao por acumulado daria um numero que nao descreve nada.
 
-   Quatro dias seguidos com foto sao quatro dias realmente observados, e e disso
-   que sai uma media diaria que significa alguma coisa.
+   Dias seguidos com foto sao dias realmente observados, e e disso que sai uma
+   media diaria que significa alguma coisa.
 
-   Sem esses quatro dias, o card simplesmente NAO APARECE. Nao ha numero honesto
-   a mostrar, e um numero ruim num painel vira decisao ruim depois.
+   Sem o minimo de quatro, o card simplesmente NAO APARECE. Nao ha numero
+   honesto a mostrar, e um numero ruim num painel vira decisao ruim depois.
 
    O que este metodo continua nao capturando: sazonalidade semanal. Uma janela
    caida num fim de semana projeta o mes inteiro como fim de semana. Corrigir
    isso precisa de meses de historico, que ainda nao existem.
 */
 
-const FORECAST_DAYS = 4;
+// O MINIMO de dias seguidos para haver previsao - nao o tamanho da janela.
+//
+// Abaixo disso nao ha previsao nenhuma: tres dias podem ser uma viagem, uma
+// visita ou um vazamento, e projetar um mes a partir deles seria chute com
+// cara de numero.
+const FORECAST_MIN_DAYS = 4;
+
+// Teto de seguranca do laco que anda para tras. Nunca deve ser alcancado - as
+// leituras sao finitas - mas um laco sem fim num navegador trava a aba.
+const FORECAST_MAX_DAYS = 400;
+
+/** "2026-09-30" + 1 -> "2026-10-01". O Date resolve virada de mes e de ano. */
+function shiftIso(iso, deltaDays) {
+  const [ano, mes, dia] = iso.split('-').map(Number);
+  return dayKey(new Date(ano, mes - 1, dia + deltaDays));
+}
+
+/** Litros de um dia, pelo ISO - a versao que atravessa a virada do mes. */
+function litersOfIso(meter, iso) {
+  const value = meter.daily.get(iso);
+  return Number.isFinite(value) ? value : 0;
+}
 
 /**
- * O bloco mais recente de FORECAST_DAYS dias seguidos em que TODOS os medidores
- * do card tiveram leitura. Null quando nao existe.
+ * A maior sequencia de dias seguidos com leitura, terminando no dia mais
+ * recente que tem leitura. Null quando ela nao alcanca FORECAST_MIN_DAYS.
+ *
+ * A janela CRESCE. Comeca nos quatro dias minimos e vai incorporando cada dia
+ * novo que chega, entao a media diaria se apoia em mais observacao a cada dia
+ * que passa e a projecao aperta sozinha. Quatro dias e o piso, nunca o teto.
+ *
+ * Ela atravessa a virada do mes de proposito. Presa ao mes corrente, todo dia
+ * 1 a previsao morreria e so voltaria no dia 4, justamente quando ha menos
+ * informacao sobre o mes e a previsao seria mais util.
+ *
+ * O que interrompe a sequencia e um dia SEM leitura nenhuma. Isso e o que se
+ * quer: uma semana de viagem, ou a placa sem bateria, nao entra na media
+ * fingindo ser consumo zero - a sequencia simplesmente termina ali.
  *
  * "Ter leitura" e ter foto lida naquele dia, nao aparecer no daily do backend:
- * um dia coberto so por uma lacuna aparece la com os litros da lacuna, e nao foi
- * observado.
+ * um dia coberto so por uma lacuna aparece la com os litros da lacuna, e nao
+ * foi observado.
  */
 function forecastWindow(meters, monthKey) {
   if (!meters.length) return null;
-  const total = daysInMonth(monthKey);
 
-  const observado = (day) => {
-    const iso = isoOf(monthKey, day);
-    return meters.every((meter) => readingsOfDay(meter, iso).length > 0);
-  };
+  const observado = (iso) => meters.every((meter) => readingsOfDay(meter, iso).length > 0);
 
-  for (let fim = total; fim >= FORECAST_DAYS; fim -= 1) {
-    let completo = true;
-    for (let dia = fim - FORECAST_DAYS + 1; dia <= fim; dia += 1) {
-      if (!observado(dia)) { completo = false; break; }
-    }
-    if (completo) return { from: fim - FORECAST_DAYS + 1, to: fim };
+  // O dia mais recente com leitura em TODOS os medidores deste card.
+  let fim = null;
+  for (let dia = daysInMonth(monthKey); dia >= 1; dia -= 1) {
+    const iso = isoOf(monthKey, dia);
+    if (observado(iso)) { fim = iso; break; }
   }
-  return null;
+  if (!fim) return null;
+
+  let inicio = fim;
+  let dias = 1;
+  while (dias < FORECAST_MAX_DAYS) {
+    const anterior = shiftIso(inicio, -1);
+    if (!observado(anterior)) break;
+    inicio = anterior;
+    dias += 1;
+  }
+
+  if (dias < FORECAST_MIN_DAYS) return null;
+  return { from: inicio, to: fim, dias };
 }
 
 /** Litros que passaram por estes medidores dentro da janela. */
-function litersInWindow(meters, monthKey, window) {
+function litersInWindow(meters, window) {
   let soma = 0;
-  for (const meter of meters) {
-    for (let dia = window.from; dia <= window.to; dia += 1) {
-      soma += litersOfDay(meter, monthKey, dia);
-    }
+  let iso = window.from;
+  for (let i = 0; i < window.dias; i += 1) {
+    for (const meter of meters) soma += litersOfIso(meter, iso);
+    iso = shiftIso(iso, 1);
   }
   return soma;
 }
@@ -848,7 +893,7 @@ function amountStat(label, value, modifier, unit) {
   return stat;
 }
 
-/** Devolve null quando nao ha quatro dias seguidos - ai nao se projeta nada. */
+/** Devolve null quando nao ha o minimo de dias seguidos - ai nao se projeta. */
 function forecastCard(name, hotMeters, coldMeters) {
   const todos = hotMeters.concat(coldMeters);
   const window = forecastWindow(todos, state.month);
@@ -857,7 +902,7 @@ function forecastCard(name, hotMeters, coldMeters) {
   const dias = daysInMonth(state.month);
   const projetar = (meters) => {
     if (!meters.length) return null;
-    return (litersInWindow(meters, state.month, window) / FORECAST_DAYS) * dias;
+    return (litersInWindow(meters, window) / window.dias) * dias;
   };
 
   const quente = projetar(hotMeters);
@@ -877,14 +922,25 @@ function forecastCard(name, hotMeters, coldMeters) {
   stats.append(amountStat('Fria', fria, 'stat--cold', 'm³'));
   card.append(stats);
 
-  const media = litersInWindow(todos, state.month, window) / FORECAST_DAYS;
-  const [, mes] = state.month.split('-');
+  const media = litersInWindow(todos, window) / window.dias;
+  const curto = (iso) => iso.slice(8, 10) + '/' + iso.slice(5, 7);
   card.append(el(
     'p', 'card__note',
-    `Base: dias ${window.from} a ${window.to}/${mes}, ${FORECAST_DAYS} dias seguidos ` +
-    `com leitura — média de ${formatLiters(media)} L por dia, repetida pelos ` +
-    `${dias} dias do mês.`
+    `Base: ${window.dias} dias seguidos com leitura, de ${curto(window.from)} a ` +
+    `${curto(window.to)} — média de ${formatLiters(media)} L por dia, repetida ` +
+    `pelos ${dias} dias do mês.`
   ));
+
+  // A precisao de uma extrapolacao linear e quase toda o tamanho da amostra, e
+  // quem le o numero merece saber de quanta observacao ele saiu. Some quando a
+  // base ja e larga o bastante para a pergunta deixar de ser interessante.
+  if (window.dias < 14) {
+    card.append(el(
+      'p', 'card__note card__note--faint',
+      `A base cresce sozinha: cada dia novo com leitura entra na média e aperta ` +
+      `esta projeção.`
+    ));
+  }
 
   return card;
 }
@@ -1256,7 +1312,7 @@ function renderAll() {
   } else {
     forecastGrid.append(el(
       'p', 'muted',
-      `Ainda não há ${FORECAST_DAYS} dias seguidos com leitura em ` +
+      `Ainda não há ${FORECAST_MIN_DAYS} dias seguidos com leitura em ` +
       `${monthLabel(state.month)} — sem base para projetar o mês.`
     ));
   }

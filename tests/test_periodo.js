@@ -178,21 +178,45 @@ check('tres dias seguidos nao bastam',
 
 check('quatro dias seguidos bastam', (() => {
   const w = forecastWindow([medidorComDias([10, 11, 12, 13])], '2026-09');
-  return w && w.from === 10 && w.to === 13;
+  return w && w.from === '2026-09-10' && w.to === '2026-09-13' && w.dias === 4;
 })());
 
 check('quatro dias soltos nao bastam',
   forecastWindow([medidorComDias([1, 5, 9, 20])], '2026-09') === null);
 
-check('pega a janela MAIS RECENTE quando ha duas', (() => {
-  const w = forecastWindow([medidorComDias([1, 2, 3, 4, 20, 21, 22, 23])], '2026-09');
-  return w && w.from === 20 && w.to === 23;
+check('a janela CRESCE com os dias novos', (() => {
+  // O mesmo medidor, quatro dias depois: a base tem que ser maior, nao igual.
+  const antes = forecastWindow([medidorComDias([10, 11, 12, 13])], '2026-09');
+  const depois = forecastWindow(
+    [medidorComDias([10, 11, 12, 13, 14, 15, 16, 17])], '2026-09');
+  return antes.dias === 4 && depois.dias === 8 && depois.from === '2026-09-10';
 })());
 
-check('a lacuna no meio e pulada', (() => {
-  // Igual a serie real da agua quente: 1-3, buraco, 11-16.
+check('termina na lacuna, nao a atravessa', (() => {
+  // Igual a serie real da quente: 1-3, buraco, 11-16. A viagem ou a placa sem
+  // bateria nao pode entrar na media fingindo consumo zero.
   const w = forecastWindow([medidorComDias([1, 2, 3, 11, 12, 13, 14, 15, 16])], '2026-09');
-  return w && w.from === 13 && w.to === 16;
+  return w && w.from === '2026-09-11' && w.to === '2026-09-16' && w.dias === 6;
+})());
+
+check('usa a sequencia que termina no dia mais recente', (() => {
+  // Ha uma sequencia mais LONGA no comeco do mes (1-8), mas a previsao e sobre
+  // o consumo de agora, entao vale a que termina no fim.
+  const w = forecastWindow(
+    [medidorComDias([1, 2, 3, 4, 5, 6, 7, 8, 20, 21, 22, 23])], '2026-09');
+  return w && w.from === '2026-09-20' && w.to === '2026-09-23' && w.dias === 4;
+})());
+
+check('atravessa a virada do mes', (() => {
+  // Sem isto, todo dia 1 a previsao morreria e so voltaria no dia 4 -
+  // justamente quando ha menos informacao sobre o mes.
+  const pontos = [];
+  for (const [ano, mes, dia] of [[2026, 7, 29], [2026, 7, 30], [2026, 7, 31],
+                                 [2026, 8, 1], [2026, 8, 2]]) {
+    pontos.push({ at: new Date(ano, mes, dia, 9, 0), reading: 100 + dia * 0.01 });
+  }
+  const w = forecastWindow([{ points: pontos, daily: new Map() }], '2026-09');
+  return w && w.from === '2026-08-29' && w.to === '2026-09-02' && w.dias === 5;
 })());
 
 check('exige os quatro dias em TODOS os medidores do card', (() => {

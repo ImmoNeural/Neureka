@@ -807,3 +807,20 @@ code {
 
 /* Nota secundaria dentro de um card: contexto, nao informacao principal. */
 .card__note--faint { color: var(--text-faint); font-size: 11.5px; }
+
+/* ==========================================================================
+   Custo
+
+   Mesmos blocos dos volumes, cor propria. Verde porque e dinheiro e nao
+   temperatura - usar o ambar da quente ou o ciano da fria aqui faria o leitor
+   ler o valor como "custo da quente" em vez de "custo do comodo".
+   ========================================================================== */
+
+.stats--custo { grid-template-columns: 1fr; }
+
+.stat--day .stat__value { color: var(--text); }
+.stats .stat--total .stat__value { color: var(--text); }
+
+/* O simbolo do euro ja vem no texto, entao o numero encolhe um pouco para o
+   bloco nao ficar mais largo que os de volume ao lado. */
+.stat__value { overflow-wrap: anywhere; }

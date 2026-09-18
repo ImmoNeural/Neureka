@@ -231,6 +231,44 @@ check('sem medidor nenhum nao ha janela', forecastWindow([], '2026-09') === null
 check('formatM3 usa tres casas e virgula', formatM3(4822) === '4,822');
 check('formatM3 devolve null para valor invalido', formatM3(null) === null);
 
+/* ------------------------------------------------------------------- custo */
+
+console.log('\ncusto');
+
+const { custoDeLitros, formatEuro } = sandbox;
+// `const` de topo nao vira propriedade do contexto do vm - so as funcoes
+// declaradas viram. A tabela de precos tem que ser lida avaliando o nome.
+const PRECO_EUR_POR_M3 = vm.runInContext('PRECO_EUR_POR_M3', sandbox);
+
+check('a tarifa da quente e 16,60 e a da fria 5,50',
+  PRECO_EUR_POR_M3.quente === 16.60 && PRECO_EUR_POR_M3.fria === 5.50);
+
+check('1 m3 de fria custa 5,50',
+  Math.abs(custoDeLitros(1000, 'fria') - 5.50) < 1e-9);
+
+check('1 m3 de quente custa 16,60',
+  Math.abs(custoDeLitros(1000, 'quente') - 16.60) < 1e-9);
+
+check('meio metro cubico custa metade',
+  Math.abs(custoDeLitros(500, 'quente') - 8.30) < 1e-9);
+
+check('cada temperatura entra com a SUA tarifa', (() => {
+  // O erro que este teste existe para impedir: somar os volumes e multiplicar
+  // uma vez so. 1000 L quente + 1000 L fria = 22,10, nunca 2 x 5,50 nem
+  // 2 x 16,60 nem 2000 L por uma tarifa media.
+  const certo = custoDeLitros(1000, 'quente') + custoDeLitros(1000, 'fria');
+  const errado = custoDeLitros(2000, 'fria');
+  return Math.abs(certo - 22.10) < 1e-9 && Math.abs(errado - 11.00) < 1e-9;
+})());
+
+check('temperatura desconhecida nao inventa custo',
+  custoDeLitros(1000, 'morna') === 0);
+
+check('formatEuro usa virgula decimal e duas casas',
+  formatEuro(22.1) === '€ 22,10', formatEuro(22.1));
+
+check('formatEuro devolve null para valor invalido', formatEuro(null) === null);
+
 /* --------------------------------------------- contra os dados de verdade */
 
 for (const roomKey of ['banheiro_fria', 'banheiro_quente']) {

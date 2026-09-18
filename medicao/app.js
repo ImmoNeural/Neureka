@@ -42,6 +42,34 @@ const GRID_COLOR = 'rgba(148, 163, 184, 0.10)';
 const TICK_COLOR = '#7c8ea6';
 
 /*
+ * Euros por metro cubico.
+ *
+ * A quente custa tres vezes a fria, e nao por ser outra agua: o preco embute o
+ * aquecimento. Por isso o custo NUNCA e calculado sobre o volume somado dos
+ * dois - cada medidor entra com a sua tarifa e as duas contas se somam no fim.
+ * Misturar os volumes antes de multiplicar erraria para menos sempre que
+ * houvesse agua quente no periodo.
+ *
+ * Valores informados pelo Thiago em 18/09/2026. Se a tarifa mudar, e aqui.
+ */
+const PRECO_EUR_POR_M3 = { quente: 16.60, fria: 5.50 };
+
+/** "€ 1.234,56" - euro com separadores de pt-BR, que e a lingua do painel. */
+function formatEuro(value) {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  return '€ ' + value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  });
+}
+
+/** Litros de um medidor -> euros, pela tarifa da temperatura dele. */
+function custoDeLitros(liters, temperature) {
+  const tarifa = PRECO_EUR_POR_M3[temperature];
+  if (!Number.isFinite(liters) || !Number.isFinite(tarifa)) return 0;
+  return (liters / 1000) * tarifa;
+}
+
+/*
  * Dois medidores no manifest, um reloginho so.
  *
  * A lavanderia e a cozinha fria passam pelo MESMO hidrometro fisico, entao
@@ -881,6 +909,18 @@ function amountStat(label, value, modifier, unit) {
   const stat = el('div', `stat ${modifier}`);
   stat.append(el('span', 'stat__label', label));
   const box = el('div', 'stat__value');
+  if (unit === '€') {
+    const euros = formatEuro(value);
+    if (euros === null) {
+      box.classList.add('stat__value--none');
+      box.textContent = '—';
+    } else {
+      // O simbolo ja vem na string, entao aqui nao entra <small> de unidade.
+      box.textContent = euros;
+    }
+    stat.append(box);
+    return stat;
+  }
   const text = unit === 'm³' ? formatM3(value) : formatLiters(value);
   if (text === null) {
     box.classList.add('stat__value--none');
@@ -921,6 +961,15 @@ function forecastCard(name, hotMeters, coldMeters) {
   stats.append(amountStat('Quente', quente, 'stat--hot', 'm³'));
   stats.append(amountStat('Fria', fria, 'stat--cold', 'm³'));
   card.append(stats);
+
+  // O volume previsto convertido em dinheiro, cada temperatura pela sua tarifa.
+  // E o numero que responde a pergunta que se faz de verdade sobre um mes que
+  // ainda nao acabou.
+  const custoPrevisto =
+    custoDeLitros(quente || 0, 'quente') + custoDeLitros(fria || 0, 'fria');
+  const custos = el('div', 'stats stats--custo');
+  custos.append(amountStat('Custo previsto', custoPrevisto || null, 'stat--total', '€'));
+  card.append(custos);
 
   const media = litersInWindow(todos, window) / window.dias;
   const curto = (iso) => iso.slice(8, 10) + '/' + iso.slice(5, 7);
@@ -1042,6 +1091,57 @@ function analysisCard(group) {
   stats.append(amountStat('Quente', hotTotal, 'stat--hot'));
   stats.append(amountStat('Fria', coldTotal, 'stat--cold'));
   card.append(stats);
+
+  /* ---- o que isso custa ----
+
+     Cada medidor multiplicado pela SUA tarifa, e as duas contas somadas. A
+     quente custa tres vezes a fria porque o preco embute o aquecimento, entao
+     somar os volumes antes de multiplicar erraria para menos.
+
+     O custo do mes e fato: e o que a agua medida ate agora ja custou. O custo
+     por dia usa a mesma janela de dias observados da previsao - dividir pelo
+     calendario jogaria os dias sem leitura no divisor e faria a media despencar
+     por falta de camera, nao por economia. */
+
+  const custoQuente = custoDeLitros(hotTotal || 0, 'quente');
+  const custoFria = custoDeLitros(coldTotal || 0, 'fria');
+
+  const janela = forecastWindow(members, state.month);
+  let custoPorDia = null;
+  if (janela) {
+    let noPeriodo = 0;
+    for (const member of members) {
+      noPeriodo += custoDeLitros(
+        litersInWindow([member], janela), member.room.temperature);
+    }
+    custoPorDia = noPeriodo / janela.dias;
+  }
+
+  card.append(el('h4', 'card__subtitle', 'Custo'));
+
+  const custos = el('div', 'stats');
+  custos.append(amountStat('No mês', custoQuente + custoFria, 'stat--total', '€'));
+  custos.append(amountStat('Por dia', custoPorDia, 'stat--day', '€'));
+  card.append(custos);
+
+  const detalhe = [];
+  if (hotTotal) {
+    detalhe.push(`quente ${formatM3(hotTotal)} m³ × € ${PRECO_EUR_POR_M3.quente
+      .toFixed(2).replace('.', ',')} = ${formatEuro(custoQuente)}`);
+  }
+  if (coldTotal) {
+    detalhe.push(`fria ${formatM3(coldTotal)} m³ × € ${PRECO_EUR_POR_M3.fria
+      .toFixed(2).replace('.', ',')} = ${formatEuro(custoFria)}`);
+  }
+  if (detalhe.length) card.append(el('p', 'card__note', detalhe.join(' · ')));
+
+  card.append(el(
+    'p', 'card__note card__note--faint',
+    janela
+      ? `A média diária vem dos ${janela.dias} dias seguidos com leitura, não do ` +
+        'calendário — dia sem câmera não conta como dia sem gasto.'
+      : 'Sem dias seguidos de leitura suficientes para uma média diária.'
+  ));
 
   card.append(el('h4', 'card__subtitle', 'Subtotais por semana'));
   card.append(legend);

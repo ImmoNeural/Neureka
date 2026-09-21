@@ -183,6 +183,43 @@ class CleanReadingsTest(unittest.TestCase):
         self.assertEqual(result.rejected_spike, 1, "a confirmacao pega")
         self.assertNotIn(135.555, [r.reading_m3 for r in result.readings])
 
+    def test_rise_of_exactly_the_threshold_is_not_quarantined(self) -> None:
+        """Subida de exatos 20 L passa direto - o caso real de 21/09/2026.
+
+        135.585 - 135.565 nao da 0.020 em ponto flutuante, da
+        0.020000000000010232, que vezes mil e maior que 20 por uma parte em dois
+        trilhoes. Sem arredondar para litro inteiro antes de comparar, uma
+        subida banal caia em quarentena e a publicacao da agua quente parava
+        por horas esperando confirmacoes que nao vinham.
+
+        Os valores aqui sao os da serie real, de proposito: um teste com
+        numeros redondos inventados nao reproduziria o erro.
+        """
+        result = sync.clean_readings(
+            frame(
+                [
+                    ("2026-09-21 09:01:00", 135.565),
+                    ("2026-09-21 11:00:00", 135.585),
+                ]
+            )
+        )
+        self.assertEqual(result.pendente_confirmacao, 0, "nao deveria esperar")
+        self.assertEqual(result.rejected_total, 0)
+        self.assertEqual([r.reading_m3 for r in result.readings], [135.565, 135.585])
+
+    def test_one_litre_above_the_threshold_still_waits(self) -> None:
+        """E o limite continua valendo: 21 L entra em quarentena."""
+        result = sync.clean_readings(
+            frame(
+                [
+                    ("2026-09-21 09:01:00", 135.565),
+                    ("2026-09-21 11:00:00", 135.586),
+                ]
+            )
+        )
+        self.assertEqual(result.pendente_confirmacao, 1)
+        self.assertEqual(len(result.readings), 1)
+
     def test_small_rise_is_published_without_waiting(self) -> None:
         """Abaixo do limite nao ha quarentena: o caso comum segue direto."""
         result = sync.clean_readings(

@@ -1,26 +1,26 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-09-21 09:44:03",
-    "hours": 515.6
+    "to": "2026-09-21 11:44:58",
+    "hours": 517.6
   },
   "coverage": {
-    "observed_minutes": 11119,
-    "gap_minutes": 19814,
+    "observed_minutes": 11097,
+    "gap_minutes": 19957,
     "absence_minutes": 12570,
-    "outage_minutes": 7244,
-    "observed_pct": 35.9,
-    "observed_pct_excl_absence": 60.6,
-    "gap_count": 31,
+    "outage_minutes": 7387,
+    "observed_pct": 35.7,
+    "observed_pct_excl_absence": 60.0,
+    "gap_count": 32,
     "absence_count": 1,
-    "outage_count": 30
+    "outage_count": 31
   },
   "volume": {
-    "total_liters": 1102,
-    "observed_liters": 754,
-    "gap_liters": 348,
+    "total_liters": 1122,
+    "observed_liters": 758,
+    "gap_liters": 364,
     "absence_liters": 115,
-    "outage_liters": 233
+    "outage_liters": 249
   },
   "gaps": [
     {
@@ -198,8 +198,8 @@
     {
       "date": "2026-09-18",
       "liters": 88,
-      "gap_liters": 24,
-      "observed_pct": 60.3
+      "gap_liters": 20,
+      "observed_pct": 55.8
     },
     {
       "date": "2026-09-19",
@@ -215,9 +215,9 @@
     },
     {
       "date": "2026-09-21",
-      "liters": 20,
-      "gap_liters": 0,
-      "observed_pct": 89.3
+      "liters": 40,
+      "gap_liters": 20,
+      "observed_pct": 80.3
     }
   ],
   "hourly": [
@@ -289,21 +289,21 @@
     },
     {
       "hour": 11,
-      "liters": 40,
-      "observed_minutes": 341,
-      "liters_per_observed_hour": 6.98
+      "liters": 44,
+      "observed_minutes": 344,
+      "liters_per_observed_hour": 7.61
     },
     {
       "hour": 12,
       "liters": 38,
-      "observed_minutes": 399,
-      "liters_per_observed_hour": 5.77
+      "observed_minutes": 374,
+      "liters_per_observed_hour": 6.16
     },
     {
       "hour": 13,
-      "liters": 74,
+      "liters": 82,
       "observed_minutes": 367,
-      "liters_per_observed_hour": 12.05
+      "liters_per_observed_hour": 13.44
     },
     {
       "hour": 14,
@@ -691,10 +691,10 @@
       0,
       0,
       0,
-      -4,
       0,
       0,
-      0,
+      9,
+      -8,
       48,
       1,
       3,

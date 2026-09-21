@@ -521,7 +521,21 @@ def clean_readings(frame: pd.DataFrame) -> CleanResult:
             # Nao ha voto nem media aqui de proposito. Uma unica leitura posterior
             # mais baixa ja e prova fisica suficiente - foi assim que o pico de
             # 420 L de 17/09 09:58 se denunciou na leitura das 10:20.
-            if (value - last_good_m3) * 1000.0 > SALTO_SUSPEITO_LITROS:
+            # Arredondado para litro INTEIRO antes de comparar, e nao por
+            # capricho de formatacao.
+            #
+            # 135.585 - 135.565 nao da 0.020 em ponto flutuante: da
+            # 0.020000000000010232. Multiplicado por mil vira 20.000000000010232,
+            # que e maior que 20 por uma parte em dois trilhoes - e uma subida de
+            # exatos 20 L, das mais banais que existem, caia em quarentena por
+            # isso. Aconteceu em 21/09/2026 as 11:00 e parou a publicacao da agua
+            # quente por horas.
+            #
+            # O medidor resolve 1 litro (a Modulatorscheibe do domaqua m gira uma
+            # volta por litro), entao diferenca abaixo disso nao significa nada e
+            # comparar inteiros elimina a fragilidade na raiz.
+            litros_do_salto = round((value - last_good_m3) * 1000.0)
+            if litros_do_salto > SALTO_SUSPEITO_LITROS:
                 seguintes = [
                     float(v)
                     for _, v in amostras[indice + 1: indice + 1 + CONFIRMAR_SALTO_EM]

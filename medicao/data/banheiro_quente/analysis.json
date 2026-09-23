@@ -1,26 +1,26 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-09-23 12:17:32",
-    "hours": 566.1
+    "to": "2026-09-23 13:22:55",
+    "hours": 567.2
   },
   "coverage": {
     "observed_minutes": 6021,
-    "gap_minutes": 27946,
+    "gap_minutes": 28011,
     "absence_minutes": 22168,
-    "outage_minutes": 5778,
+    "outage_minutes": 5843,
     "observed_pct": 17.7,
-    "observed_pct_excl_absence": 51.0,
-    "gap_count": 20,
+    "observed_pct_excl_absence": 50.8,
+    "gap_count": 21,
     "absence_count": 2,
-    "outage_count": 18
+    "outage_count": 19
   },
   "volume": {
-    "total_liters": 742,
+    "total_liters": 752,
     "observed_liters": 418,
-    "gap_liters": 324,
+    "gap_liters": 334,
     "absence_liters": 115,
-    "outage_liters": 209
+    "outage_liters": 219
   },
   "gaps": [
     {
@@ -227,9 +227,9 @@
     },
     {
       "date": "2026-09-23",
-      "liters": 0,
-      "gap_liters": 0,
-      "observed_pct": 11.6
+      "liters": 10,
+      "gap_liters": 10,
+      "observed_pct": 10.7
     }
   ],
   "hourly": [

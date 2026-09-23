@@ -37,10 +37,55 @@
   },
   {
     "date": "2026-09-16",
+    "session_count": 2,
+    "banho_count": 1,
+    "descarga_count": 0,
+    "total_liters": 51,
+    "avg_liters_per_banho": 50.0,
+    "avg_liters_per_descarga": 0.0
+  },
+  {
+    "date": "2026-09-18",
+    "session_count": 2,
+    "banho_count": 0,
+    "descarga_count": 0,
+    "total_liters": 3,
+    "avg_liters_per_banho": 0.0,
+    "avg_liters_per_descarga": 0.0
+  },
+  {
+    "date": "2026-09-19",
+    "session_count": 3,
+    "banho_count": 0,
+    "descarga_count": 0,
+    "total_liters": 4,
+    "avg_liters_per_banho": 0.0,
+    "avg_liters_per_descarga": 0.0
+  },
+  {
+    "date": "2026-09-20",
+    "session_count": 1,
+    "banho_count": 1,
+    "descarga_count": 0,
+    "total_liters": 31,
+    "avg_liters_per_banho": 31.0,
+    "avg_liters_per_descarga": 0.0
+  },
+  {
+    "date": "2026-09-21",
     "session_count": 1,
     "banho_count": 0,
     "descarga_count": 0,
-    "total_liters": 1,
+    "total_liters": 2,
+    "avg_liters_per_banho": 0.0,
+    "avg_liters_per_descarga": 0.0
+  },
+  {
+    "date": "2026-09-22",
+    "session_count": 2,
+    "banho_count": 0,
+    "descarga_count": 0,
+    "total_liters": 15,
     "avg_liters_per_banho": 0.0,
     "avg_liters_per_descarga": 0.0
   }

@@ -1,26 +1,26 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-09-23 18:45:31",
-    "hours": 572.6
+    "to": "2026-09-23 19:06:49",
+    "hours": 572.9
   },
   "coverage": {
-    "observed_minutes": 6344,
-    "gap_minutes": 28011,
-    "absence_minutes": 22168,
-    "outage_minutes": 5843,
-    "observed_pct": 18.5,
-    "observed_pct_excl_absence": 52.1,
-    "gap_count": 21,
-    "absence_count": 2,
-    "outage_count": 19
+    "observed_minutes": 13714,
+    "gap_minutes": 20663,
+    "absence_minutes": 12570,
+    "outage_minutes": 8092,
+    "observed_pct": 39.9,
+    "observed_pct_excl_absence": 62.9,
+    "gap_count": 41,
+    "absence_count": 1,
+    "outage_count": 40
   },
   "volume": {
-    "total_liters": 752,
-    "observed_liters": 418,
-    "gap_liters": 334,
+    "total_liters": 1252,
+    "observed_liters": 822,
+    "gap_liters": 430,
     "absence_liters": 115,
-    "outage_liters": 219
+    "outage_liters": 315
   },
   "gaps": [
     {
@@ -28,13 +28,6 @@
       "to": "2026-09-11 19:34:49",
       "hours": 209.5,
       "liters": 115,
-      "kind": "absence"
-    },
-    {
-      "from": "2026-09-16 18:54:14",
-      "to": "2026-09-23 10:51:57",
-      "hours": 160.0,
-      "liters": 0,
       "kind": "absence"
     },
     {
@@ -73,10 +66,17 @@
       "kind": "outage"
     },
     {
-      "from": "2026-09-16 07:49:13",
-      "to": "2026-09-16 12:01:39",
-      "hours": 4.2,
-      "liters": 40,
+      "from": "2026-09-18 02:41:34",
+      "to": "2026-09-18 08:01:27",
+      "hours": 5.3,
+      "liters": 21,
+      "kind": "outage"
+    },
+    {
+      "from": "2026-09-17 12:28:50",
+      "to": "2026-09-17 16:49:48",
+      "hours": 4.3,
+      "liters": 5,
       "kind": "outage"
     }
   ],
@@ -185,197 +185,197 @@
     },
     {
       "date": "2026-09-16",
-      "liters": 51,
+      "liters": 141,
       "gap_liters": 40,
-      "observed_pct": 61.2
+      "observed_pct": 82.5
     },
     {
       "date": "2026-09-17",
-      "liters": 0,
+      "liters": 30,
       "gap_liters": 0,
-      "observed_pct": 0.0
+      "observed_pct": 48.2
     },
     {
       "date": "2026-09-18",
-      "liters": 0,
-      "gap_liters": 0,
-      "observed_pct": 0.0
+      "liters": 88,
+      "gap_liters": 20,
+      "observed_pct": 55.8
     },
     {
       "date": "2026-09-19",
-      "liters": 0,
-      "gap_liters": 0,
-      "observed_pct": 0.0
+      "liters": 62,
+      "gap_liters": 2,
+      "observed_pct": 93.9
     },
     {
       "date": "2026-09-20",
-      "liters": 0,
+      "liters": 70,
       "gap_liters": 0,
-      "observed_pct": 0.0
+      "observed_pct": 100.0
     },
     {
       "date": "2026-09-21",
-      "liters": 0,
-      "gap_liters": 0,
-      "observed_pct": 0.0
+      "liters": 57,
+      "gap_liters": 26,
+      "observed_pct": 85.8
     },
     {
       "date": "2026-09-22",
-      "liters": 0,
-      "gap_liters": 0,
-      "observed_pct": 0.0
+      "liters": 83,
+      "gap_liters": 45,
+      "observed_pct": 70.7
     },
     {
       "date": "2026-09-23",
-      "liters": 10,
-      "gap_liters": 10,
-      "observed_pct": 36.3
+      "liters": 30,
+      "gap_liters": 15,
+      "observed_pct": 81.0
     }
   ],
   "hourly": [
     {
       "hour": 0,
-      "liters": 4,
-      "observed_minutes": 420,
-      "liters_per_observed_hour": 0.62
+      "liters": 20,
+      "observed_minutes": 792,
+      "liters_per_observed_hour": 1.51
     },
     {
       "hour": 1,
       "liters": 0,
-      "observed_minutes": 361,
+      "observed_minutes": 688,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 2,
-      "liters": 0,
-      "observed_minutes": 244,
-      "liters_per_observed_hour": 0.0
+      "liters": 2,
+      "observed_minutes": 627,
+      "liters_per_observed_hour": 0.15
     },
     {
       "hour": 3,
       "liters": 0,
-      "observed_minutes": 240,
+      "observed_minutes": 600,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 4,
-      "liters": 1,
-      "observed_minutes": 240,
-      "liters_per_observed_hour": 0.16
+      "liters": 2,
+      "observed_minutes": 600,
+      "liters_per_observed_hour": 0.17
     },
     {
       "hour": 5,
-      "liters": 0,
-      "observed_minutes": 240,
-      "liters_per_observed_hour": 0.0
+      "liters": 5,
+      "observed_minutes": 600,
+      "liters_per_observed_hour": 0.54
     },
     {
       "hour": 6,
       "liters": 0,
-      "observed_minutes": 240,
+      "observed_minutes": 593,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 7,
-      "liters": 3,
-      "observed_minutes": 207,
-      "liters_per_observed_hour": 0.83
+      "liters": 18,
+      "observed_minutes": 488,
+      "liters_per_observed_hour": 2.21
     },
     {
       "hour": 8,
-      "liters": 0,
-      "observed_minutes": 120,
-      "liters_per_observed_hour": 0.0
+      "liters": 42,
+      "observed_minutes": 401,
+      "liters_per_observed_hour": 6.27
     },
     {
       "hour": 9,
-      "liters": 17,
-      "observed_minutes": 128,
-      "liters_per_observed_hour": 7.76
+      "liters": 27,
+      "observed_minutes": 430,
+      "liters_per_observed_hour": 3.72
     },
     {
       "hour": 10,
-      "liters": 77,
-      "observed_minutes": 188,
-      "liters_per_observed_hour": 24.71
+      "liters": 97,
+      "observed_minutes": 390,
+      "liters_per_observed_hour": 14.89
     },
     {
       "hour": 11,
-      "liters": 43,
-      "observed_minutes": 240,
-      "liters_per_observed_hour": 10.73
+      "liters": 39,
+      "observed_minutes": 380,
+      "liters_per_observed_hour": 6.2
     },
     {
       "hour": 12,
-      "liters": 40,
-      "observed_minutes": 237,
-      "liters_per_observed_hour": 10.18
+      "liters": 39,
+      "observed_minutes": 451,
+      "liters_per_observed_hour": 5.14
     },
     {
       "hour": 13,
-      "liters": 66,
-      "observed_minutes": 277,
-      "liters_per_observed_hour": 14.25
+      "liters": 77,
+      "observed_minutes": 517,
+      "liters_per_observed_hour": 8.98
     },
     {
       "hour": 14,
       "liters": 0,
-      "observed_minutes": 354,
+      "observed_minutes": 619,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 15,
-      "liters": 38,
-      "observed_minutes": 348,
-      "liters_per_observed_hour": 6.51
+      "liters": 95,
+      "observed_minutes": 648,
+      "liters_per_observed_hour": 8.79
     },
     {
       "hour": 16,
-      "liters": 14,
-      "observed_minutes": 300,
-      "liters_per_observed_hour": 2.81
+      "liters": 15,
+      "observed_minutes": 599,
+      "liters_per_observed_hour": 1.53
     },
     {
       "hour": 17,
-      "liters": 0,
-      "observed_minutes": 300,
-      "liters_per_observed_hour": 0.0
+      "liters": 25,
+      "observed_minutes": 549,
+      "liters_per_observed_hour": 2.78
     },
     {
       "hour": 18,
-      "liters": 9,
-      "observed_minutes": 311,
-      "liters_per_observed_hour": 1.68
+      "liters": 36,
+      "observed_minutes": 588,
+      "liters_per_observed_hour": 3.64
     },
     {
       "hour": 19,
-      "liters": 6,
-      "observed_minutes": 173,
-      "liters_per_observed_hour": 2.08
+      "liters": 95,
+      "observed_minutes": 480,
+      "liters_per_observed_hour": 11.94
     },
     {
       "hour": 20,
-      "liters": 0,
-      "observed_minutes": 161,
-      "liters_per_observed_hour": 0.03
+      "liters": 50,
+      "observed_minutes": 461,
+      "liters_per_observed_hour": 6.56
     },
     {
       "hour": 21,
-      "liters": 39,
-      "observed_minutes": 294,
-      "liters_per_observed_hour": 7.98
+      "liters": 79,
+      "observed_minutes": 681,
+      "liters_per_observed_hour": 6.98
     },
     {
       "hour": 22,
-      "liters": 65,
-      "observed_minutes": 334,
-      "liters_per_observed_hour": 11.61
+      "liters": 96,
+      "observed_minutes": 754,
+      "liters_per_observed_hour": 7.66
     },
     {
       "hour": 23,
-      "liters": 10,
-      "observed_minutes": 388,
-      "liters_per_observed_hour": 1.55
+      "liters": 1,
+      "observed_minutes": 778,
+      "liters_per_observed_hour": 0.05
     }
   ],
   "hourly_by_day": {
@@ -658,14 +658,40 @@
       0,
       1,
       -1,
-      10,
+      20,
+      80,
+      1,
+      0,
+      0,
+      -2
+    ],
+    "2026-09-17": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      -2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      -2,
+      20,
+      15,
       0,
       0,
       0,
       0,
       0
     ],
-    "2026-09-23": [
+    "2026-09-18": [
       0,
       0,
       0,
@@ -674,10 +700,140 @@
       0,
       0,
       0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      -8,
+      48,
+      1,
+      3,
+      0,
+      -5,
+      20,
+      0,
+      1,
+      0
+    ],
+    "2026-09-19": [
+      2,
+      -2,
+      2,
+      -2,
+      0,
+      0,
+      0,
+      -1,
+      2,
+      3,
+      20,
+      0,
+      -1,
+      0,
+      0,
+      -3,
+      3,
+      2,
+      0,
+      14,
+      3,
+      19,
+      -1,
+      0
+    ],
+    "2026-09-20": [
+      1,
+      -1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      34,
+      6,
+      0,
+      2,
+      -2,
+      8,
+      -13,
+      1,
+      3,
+      2,
+      -2,
+      0,
+      27,
+      5,
+      3,
+      -5
+    ],
+    "2026-09-21": [
+      10,
+      0,
+      0,
+      0,
+      0,
+      6,
+      -6,
+      0,
+      9,
       0,
       0,
       0,
       2,
+      0,
+      0,
+      -1,
+      -1,
+      0,
+      4,
+      0,
+      -1,
+      5,
+      4,
+      -2
+    ],
+    "2026-09-22": [
+      3,
+      0,
+      -2,
+      1,
+      0,
+      -2,
+      4,
+      -1,
+      -1,
+      1,
+      -1,
+      -4,
+      0,
+      -5,
+      0,
+      12,
+      -2,
+      0,
+      0,
+      0,
+      0,
+      11,
+      24,
+      0
+    ],
+    "2026-09-23": [
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      17,
+      0,
+      0,
+      0,
+      0,
       -2,
       0,
       0,

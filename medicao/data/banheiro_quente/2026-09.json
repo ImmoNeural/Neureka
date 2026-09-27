@@ -3481,74 +3481,94 @@
   },
   {
     "timestamp": "2026-09-27 03:20:45",
-    "reading": 135.997
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 03:40:54",
-    "reading": 135.995
+    "reading": 135.97
+  },
+  {
+    "timestamp": "2026-09-27 04:00:58",
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 04:21:07",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 04:42:26",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 05:04:18",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 05:26:19",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 05:48:22",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 06:09:40",
-    "reading": 135.995
+    "reading": 135.97
+  },
+  {
+    "timestamp": "2026-09-27 06:31:44",
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 06:51:48",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 07:13:09",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 07:33:14",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 07:43:36",
-    "reading": 135.99
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 08:03:42",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 08:24:58",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 08:35:24",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 08:57:26",
-    "reading": 135.995
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 09:17:31",
-    "reading": 135.997
+    "reading": 135.97
   },
   {
     "timestamp": "2026-09-27 09:39:31",
-    "reading": 135.995
+    "reading": 135.97
+  },
+  {
+    "timestamp": "2026-09-27 09:50:19",
+    "reading": 135.97
+  },
+  {
+    "timestamp": "2026-09-27 10:12:18",
+    "reading": 135.97
+  },
+  {
+    "timestamp": "2026-09-27 10:33:42",
+    "reading": 135.972
   }
 ]

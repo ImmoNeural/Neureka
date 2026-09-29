@@ -1,23 +1,23 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-09-29 18:08:34",
-    "hours": 716.0
+    "to": "2026-09-29 19:13:48",
+    "hours": 717.1
   },
   "coverage": {
-    "observed_minutes": 20949,
-    "gap_minutes": 22009,
+    "observed_minutes": 21124,
+    "gap_minutes": 21899,
     "absence_minutes": 12570,
-    "outage_minutes": 9438,
-    "observed_pct": 48.8,
-    "observed_pct_excl_absence": 68.9,
-    "gap_count": 53,
+    "outage_minutes": 9329,
+    "observed_pct": 49.1,
+    "observed_pct_excl_absence": 69.4,
+    "gap_count": 52,
     "absence_count": 1,
-    "outage_count": 52
+    "outage_count": 51
   },
   "volume": {
-    "total_liters": 1662,
-    "observed_liters": 1057,
+    "total_liters": 1666,
+    "observed_liters": 1061,
     "gap_liters": 605,
     "absence_liters": 115,
     "outage_liters": 490
@@ -263,9 +263,9 @@
     },
     {
       "date": "2026-09-29",
-      "liters": 20,
+      "liters": 24,
       "gap_liters": 0,
-      "observed_pct": 89.9
+      "observed_pct": 100.0
     }
   ],
   "hourly": [
@@ -368,26 +368,26 @@
     {
       "hour": 16,
       "liters": 25,
-      "observed_minutes": 858,
-      "liters_per_observed_hour": 1.78
+      "observed_minutes": 899,
+      "liters_per_observed_hour": 1.7
     },
     {
       "hour": 17,
       "liters": 8,
-      "observed_minutes": 762,
-      "liters_per_observed_hour": 0.65
+      "observed_minutes": 822,
+      "liters_per_observed_hour": 0.6
     },
     {
       "hour": 18,
-      "liters": 20,
-      "observed_minutes": 816,
+      "liters": 21,
+      "observed_minutes": 876,
       "liters_per_observed_hour": 1.44
     },
     {
       "hour": 19,
-      "liters": 105,
-      "observed_minutes": 780,
-      "liters_per_observed_hour": 8.1
+      "liters": 108,
+      "observed_minutes": 794,
+      "liters_per_observed_hour": 8.15
     },
     {
       "hour": 20,
@@ -1032,8 +1032,8 @@
       0,
       0,
       0,
-      0,
-      0,
+      2,
+      2,
       0,
       0,
       0,

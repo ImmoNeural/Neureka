@@ -1,16 +1,16 @@
 {
-  "gerado_em": "2026-09-28T11:59:02.518664+02:00",
+  "gerado_em": "2026-09-29T11:59:02.532766+02:00",
   "criterio": {
     "salto_suspeito_litros": 20.0,
     "confirmar_salto_em": 3,
     "subida_para_conferir_litros": 150.0
   },
-  "total_descartes": 93,
+  "total_descartes": 95,
   "total_conferir": 0,
   "medidores": [
     {
       "room_key": "banheiro_quente",
-      "aceitas": 989,
+      "aceitas": 1043,
       "descartes": [
         {
           "timestamp": "2026-08-30 22:25:10",
@@ -191,7 +191,7 @@
     },
     {
       "room_key": "banheiro_fria",
-      "aceitas": 1126,
+      "aceitas": 1195,
       "descartes": [
         {
           "timestamp": "2026-09-13 16:37:03",
@@ -456,6 +456,18 @@
           "leitura": 188.865,
           "motivo": "pico contradito",
           "detalhe": "subiu 260 L sobre 188.605, mas as leituras seguintes voltaram para 188.605 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-28 13:17:53",
+          "leitura": 188.881,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 91 L sobre 188.790, mas as leituras seguintes voltaram para 188.810 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-09-28 14:34:36",
+          "leitura": 188.882,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 66 L sobre 188.816, mas as leituras seguintes voltaram para 188.820 - o relogio nao anda para tras"
         }
       ],
       "conferir": []

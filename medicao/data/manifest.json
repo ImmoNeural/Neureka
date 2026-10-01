@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-10-01T10:00:02.306183+02:00",
+  "generated_at": "2026-10-01T10:02:24.667065+02:00",
   "rooms": [
     {
       "room_key": "banheiro_quente",
       "label": "Banheiro - Quente",
       "temperature": "quente",
       "has_data": true,
-      "last_reading": 136.225,
-      "last_reading_at": "2026-10-01 09:23:21",
-      "last_sync": "2026-10-01T10:00:02.306183+02:00",
+      "last_reading": 136.221,
+      "last_reading_at": "2026-10-01 09:43:55",
+      "last_sync": "2026-10-01T10:02:24.667065+02:00",
       "available_months": [
         "2026-08",
         "2026-09",
@@ -23,7 +23,7 @@
       "has_data": true,
       "last_reading": 189.21,
       "last_reading_at": "2026-10-01 09:41:41",
-      "last_sync": "2026-10-01T10:00:02.306183+02:00",
+      "last_sync": "2026-10-01T10:02:24.667065+02:00",
       "available_months": [
         "2026-09",
         "2026-10",
@@ -37,7 +37,7 @@
       "has_data": true,
       "last_reading": 25.095,
       "last_reading_at": "2026-09-16 16:13:04",
-      "last_sync": "2026-10-01T10:00:02.306183+02:00",
+      "last_sync": "2026-10-01T10:02:24.667065+02:00",
       "available_months": [
         "2026-09",
         "analysis"
@@ -50,7 +50,7 @@
       "has_data": false,
       "last_reading": null,
       "last_reading_at": null,
-      "last_sync": "2026-10-01T10:00:02.306183+02:00",
+      "last_sync": "2026-10-01T10:02:24.667065+02:00",
       "available_months": []
     },
     {
@@ -60,7 +60,7 @@
       "has_data": false,
       "last_reading": null,
       "last_reading_at": null,
-      "last_sync": "2026-10-01T10:00:02.306183+02:00",
+      "last_sync": "2026-10-01T10:02:24.667065+02:00",
       "available_months": []
     }
   ]

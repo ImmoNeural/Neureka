@@ -5,22 +5,22 @@
     "hours": 814.0
   },
   "coverage": {
-    "observed_minutes": 24718,
-    "gap_minutes": 24123,
-    "absence_minutes": 14620,
-    "outage_minutes": 9503,
-    "observed_pct": 50.6,
-    "observed_pct_excl_absence": 72.2,
-    "gap_count": 55,
-    "absence_count": 2,
-    "outage_count": 53
+    "observed_minutes": 26594,
+    "gap_minutes": 22248,
+    "absence_minutes": 12570,
+    "outage_minutes": 9677,
+    "observed_pct": 54.4,
+    "observed_pct_excl_absence": 73.3,
+    "gap_count": 57,
+    "absence_count": 1,
+    "outage_count": 56
   },
   "volume": {
     "total_liters": 1962,
-    "observed_liters": 1337,
-    "gap_liters": 625,
-    "absence_liters": 135,
-    "outage_liters": 490
+    "observed_liters": 1355,
+    "gap_liters": 607,
+    "absence_liters": 115,
+    "outage_liters": 492
   },
   "gaps": [
     {
@@ -28,13 +28,6 @@
       "to": "2026-09-11 19:34:49",
       "hours": 209.5,
       "liters": 115,
-      "kind": "absence"
-    },
-    {
-      "from": "2026-10-01 16:38:19",
-      "to": "2026-10-03 02:48:09",
-      "hours": 34.2,
-      "liters": 20,
       "kind": "absence"
     },
     {
@@ -77,6 +70,13 @@
       "to": "2026-09-18 08:01:27",
       "hours": 5.3,
       "liters": 21,
+      "kind": "outage"
+    },
+    {
+      "from": "2026-09-17 12:28:50",
+      "to": "2026-09-17 16:49:48",
+      "hours": 4.3,
+      "liters": 5,
       "kind": "outage"
     }
   ],
@@ -275,167 +275,167 @@
     },
     {
       "date": "2026-10-01",
-      "liters": 68,
-      "gap_liters": 4,
-      "observed_pct": 69.3
+      "liters": 154,
+      "gap_liters": 2,
+      "observed_pct": 89.4
     },
     {
       "date": "2026-10-02",
-      "liters": 14,
-      "gap_liters": 14,
-      "observed_pct": 0.0
+      "liters": 16,
+      "gap_liters": 0,
+      "observed_pct": 90.9
     },
     {
       "date": "2026-10-03",
-      "liters": 123,
-      "gap_liters": 2,
-      "observed_pct": 71.8
+      "liters": 35,
+      "gap_liters": 0,
+      "observed_pct": 94.6
     }
   ],
   "hourly": [
     {
       "hour": 0,
-      "liters": 24,
-      "observed_minutes": 1263,
-      "liters_per_observed_hour": 1.14
+      "liters": 25,
+      "observed_minutes": 1383,
+      "liters_per_observed_hour": 1.08
     },
     {
       "hour": 1,
       "liters": 0,
-      "observed_minutes": 1167,
+      "observed_minutes": 1287,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 2,
-      "liters": 8,
-      "observed_minutes": 1058,
-      "liters_per_observed_hour": 0.46
+      "liters": 12,
+      "observed_minutes": 1167,
+      "liters_per_observed_hour": 0.63
     },
     {
       "hour": 3,
-      "liters": 1,
-      "observed_minutes": 1095,
-      "liters_per_observed_hour": 0.04
+      "liters": 0,
+      "observed_minutes": 1161,
+      "liters_per_observed_hour": 0.0
     },
     {
       "hour": 4,
       "liters": 0,
-      "observed_minutes": 1020,
+      "observed_minutes": 1118,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 5,
-      "liters": 77,
-      "observed_minutes": 1059,
-      "liters_per_observed_hour": 4.35
+      "liters": 5,
+      "observed_minutes": 1119,
+      "liters_per_observed_hour": 0.26
     },
     {
       "hour": 6,
-      "liters": 8,
-      "observed_minutes": 1073,
-      "liters_per_observed_hour": 0.44
+      "liters": 0,
+      "observed_minutes": 1124,
+      "liters_per_observed_hour": 0.0
     },
     {
       "hour": 7,
       "liters": 27,
-      "observed_minutes": 918,
-      "liters_per_observed_hour": 1.79
+      "observed_minutes": 972,
+      "liters_per_observed_hour": 1.7
     },
     {
       "hour": 8,
       "liters": 126,
-      "observed_minutes": 902,
-      "liters_per_observed_hour": 8.38
+      "observed_minutes": 977,
+      "liters_per_observed_hour": 7.73
     },
     {
       "hour": 9,
       "liters": 49,
-      "observed_minutes": 970,
-      "liters_per_observed_hour": 3.04
+      "observed_minutes": 1030,
+      "liters_per_observed_hour": 2.87
     },
     {
       "hour": 10,
-      "liters": 103,
-      "observed_minutes": 904,
-      "liters_per_observed_hour": 6.83
+      "liters": 107,
+      "observed_minutes": 964,
+      "liters_per_observed_hour": 6.65
     },
     {
       "hour": 11,
       "liters": 98,
-      "observed_minutes": 860,
-      "liters_per_observed_hour": 6.85
+      "observed_minutes": 920,
+      "liters_per_observed_hour": 6.4
     },
     {
       "hour": 12,
       "liters": 49,
-      "observed_minutes": 931,
-      "liters_per_observed_hour": 3.18
+      "observed_minutes": 991,
+      "liters_per_observed_hour": 2.99
     },
     {
       "hour": 13,
-      "liters": 82,
-      "observed_minutes": 997,
-      "liters_per_observed_hour": 4.96
+      "liters": 90,
+      "observed_minutes": 1057,
+      "liters_per_observed_hour": 5.13
     },
     {
       "hour": 14,
       "liters": 0,
-      "observed_minutes": 1078,
+      "observed_minutes": 1138,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 15,
-      "liters": 137,
-      "observed_minutes": 1128,
-      "liters_per_observed_hour": 7.27
+      "liters": 139,
+      "observed_minutes": 1188,
+      "liters_per_observed_hour": 7.03
     },
     {
       "hour": 16,
-      "liters": 57,
-      "observed_minutes": 1057,
-      "liters_per_observed_hour": 3.22
+      "liters": 97,
+      "observed_minutes": 1139,
+      "liters_per_observed_hour": 5.12
     },
     {
       "hour": 17,
-      "liters": 12,
-      "observed_minutes": 942,
-      "liters_per_observed_hour": 0.78
+      "liters": 10,
+      "observed_minutes": 1062,
+      "liters_per_observed_hour": 0.56
     },
     {
       "hour": 18,
       "liters": 20,
-      "observed_minutes": 996,
-      "liters_per_observed_hour": 1.21
+      "observed_minutes": 1116,
+      "liters_per_observed_hour": 1.08
     },
     {
       "hour": 19,
-      "liters": 138,
-      "observed_minutes": 960,
-      "liters_per_observed_hour": 8.64
+      "liters": 141,
+      "observed_minutes": 1080,
+      "liters_per_observed_hour": 7.86
     },
     {
       "hour": 20,
-      "liters": 59,
-      "observed_minutes": 877,
-      "liters_per_observed_hour": 4.02
+      "liters": 75,
+      "observed_minutes": 977,
+      "liters_per_observed_hour": 4.58
     },
     {
       "hour": 21,
-      "liters": 158,
-      "observed_minutes": 1092,
-      "liters_per_observed_hour": 8.66
+      "liters": 168,
+      "observed_minutes": 1167,
+      "liters_per_observed_hour": 8.63
     },
     {
       "hour": 22,
-      "liters": 118,
-      "observed_minutes": 1174,
-      "liters_per_observed_hour": 6.03
+      "liters": 138,
+      "observed_minutes": 1252,
+      "liters_per_observed_hour": 6.61
     },
     {
       "hour": 23,
       "liters": 10,
-      "observed_minutes": 1198,
-      "liters_per_observed_hour": 0.5
+      "observed_minutes": 1208,
+      "liters_per_observed_hour": 0.51
     }
   ],
   "hourly_by_day": {
@@ -1106,11 +1106,37 @@
       1,
       3,
       28,
-      31,
+      72,
+      1,
+      0,
+      3,
+      14,
+      10,
+      20,
+      0
+    ],
+    "2026-10-02": [
+      1,
       0,
       0,
       0,
       0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      8,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
       0,
       0,
       0
@@ -1118,11 +1144,11 @@
     "2026-10-03": [
       0,
       0,
+      4,
       0,
-      1,
       0,
-      72,
-      17,
+      0,
+      0,
       0,
       0,
       21,
@@ -1131,9 +1157,9 @@
       0,
       0,
       3,
+      3,
       0,
-      0,
-      4,
+      1,
       2,
       1,
       0,

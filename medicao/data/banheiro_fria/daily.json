@@ -172,11 +172,11 @@
   },
   {
     "date": "2026-10-03",
-    "session_count": 2,
+    "session_count": 3,
     "banho_count": 0,
-    "descarga_count": 1,
-    "total_liters": 26,
+    "descarga_count": 2,
+    "total_liters": 36,
     "avg_liters_per_banho": 0.0,
-    "avg_liters_per_descarga": 5.0
+    "avg_liters_per_descarga": 7.5
   }
 ]

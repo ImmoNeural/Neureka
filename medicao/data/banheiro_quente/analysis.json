@@ -1,23 +1,23 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-10-04 19:28:47",
-    "hours": 837.3
+    "to": "2026-10-04 20:33:08",
+    "hours": 838.4
   },
   "coverage": {
-    "observed_minutes": 28209,
-    "gap_minutes": 22029,
+    "observed_minutes": 28163,
+    "gap_minutes": 22139,
     "absence_minutes": 12570,
-    "outage_minutes": 9459,
-    "observed_pct": 56.2,
-    "observed_pct_excl_absence": 74.9,
-    "gap_count": 54,
+    "outage_minutes": 9569,
+    "observed_pct": 56.0,
+    "observed_pct_excl_absence": 74.6,
+    "gap_count": 55,
     "absence_count": 1,
-    "outage_count": 53
+    "outage_count": 54
   },
   "volume": {
-    "total_liters": 1992,
-    "observed_liters": 1387,
+    "total_liters": 1987,
+    "observed_liters": 1382,
     "gap_liters": 605,
     "absence_liters": 115,
     "outage_liters": 490
@@ -293,9 +293,9 @@
     },
     {
       "date": "2026-10-04",
-      "liters": 5,
+      "liters": 0,
       "gap_liters": 0,
-      "observed_pct": 100.0
+      "observed_pct": 91.1
     }
   ],
   "hourly": [
@@ -361,15 +361,15 @@
     },
     {
       "hour": 10,
-      "liters": 112,
-      "observed_minutes": 1024,
-      "liters_per_observed_hour": 6.56
+      "liters": 107,
+      "observed_minutes": 966,
+      "liters_per_observed_hour": 6.64
     },
     {
       "hour": 11,
       "liters": 98,
-      "observed_minutes": 980,
-      "liters_per_observed_hour": 6.01
+      "observed_minutes": 927,
+      "liters_per_observed_hour": 6.35
     },
     {
       "hour": 12,
@@ -416,14 +416,14 @@
     {
       "hour": 19,
       "liters": 138,
-      "observed_minutes": 1109,
-      "liters_per_observed_hour": 7.48
+      "observed_minutes": 1140,
+      "liters_per_observed_hour": 7.28
     },
     {
       "hour": 20,
       "liters": 61,
-      "observed_minutes": 1045,
-      "liters_per_observed_hour": 3.49
+      "observed_minutes": 1078,
+      "liters_per_observed_hour": 3.38
     },
     {
       "hour": 21,
@@ -1184,7 +1184,7 @@
       0,
       0,
       0,
-      5,
+      0,
       0,
       0,
       0,

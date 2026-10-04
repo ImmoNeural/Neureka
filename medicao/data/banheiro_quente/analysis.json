@@ -391,9 +391,9 @@
     },
     {
       "hour": 15,
-      "liters": 139,
+      "liters": 136,
       "observed_minutes": 1188,
-      "liters_per_observed_hour": 7.03
+      "liters_per_observed_hour": 6.88
     },
     {
       "hour": 16,
@@ -403,9 +403,9 @@
     },
     {
       "hour": 17,
-      "liters": 24,
+      "liters": 27,
       "observed_minutes": 1062,
-      "liters_per_observed_hour": 1.38
+      "liters_per_observed_hour": 1.55
     },
     {
       "hour": 18,
@@ -1163,9 +1163,9 @@
       0,
       0,
       3,
-      3,
       0,
-      1,
+      0,
+      4,
       2,
       1,
       0,

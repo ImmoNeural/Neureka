@@ -351,13 +351,13 @@
       "hour": 7,
       "liters": 36,
       "observed_minutes": 1148,
-      "liters_per_observed_hour": 1.87
+      "liters_per_observed_hour": 1.9
     },
     {
       "hour": 8,
       "liters": 150,
       "observed_minutes": 1097,
-      "liters_per_observed_hour": 8.21
+      "liters_per_observed_hour": 8.19
     },
     {
       "hour": 9,
@@ -1213,7 +1213,7 @@
       2,
       3,
       2,
-      1,
+      2,
       1,
       0,
       0,

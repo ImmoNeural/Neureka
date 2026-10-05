@@ -16,8 +16,8 @@
     "outage_count": 53
   },
   "volume": {
-    "total_liters": 2092,
-    "observed_liters": 1487,
+    "total_liters": 2094,
+    "observed_liters": 1489,
     "gap_liters": 605,
     "absence_liters": 115,
     "outage_liters": 490
@@ -299,7 +299,7 @@
     },
     {
       "date": "2026-10-05",
-      "liters": 18,
+      "liters": 20,
       "gap_liters": 0,
       "observed_pct": 100.0
     }
@@ -355,9 +355,9 @@
     },
     {
       "hour": 8,
-      "liters": 148,
+      "liters": 150,
       "observed_minutes": 1097,
-      "liters_per_observed_hour": 8.1
+      "liters_per_observed_hour": 8.21
     },
     {
       "hour": 9,
@@ -1214,7 +1214,7 @@
       3,
       2,
       1,
-      -1,
+      1,
       0,
       0,
       0,

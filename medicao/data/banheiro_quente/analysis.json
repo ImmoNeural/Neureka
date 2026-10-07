@@ -415,33 +415,33 @@
     },
     {
       "hour": 16,
-      "liters": 120,
+      "liters": 127,
       "observed_minutes": 1351,
-      "liters_per_observed_hour": 5.31
+      "liters_per_observed_hour": 5.62
     },
     {
       "hour": 17,
-      "liters": 32,
+      "liters": 30,
       "observed_minutes": 1223,
-      "liters_per_observed_hour": 1.57
+      "liters_per_observed_hour": 1.47
     },
     {
       "hour": 18,
-      "liters": 27,
+      "liters": 23,
       "observed_minutes": 1312,
-      "liters_per_observed_hour": 1.23
+      "liters_per_observed_hour": 1.03
     },
     {
       "hour": 19,
-      "liters": 201,
+      "liters": 190,
       "observed_minutes": 1320,
-      "liters_per_observed_hour": 9.14
+      "liters_per_observed_hour": 8.62
     },
     {
       "hour": 20,
-      "liters": 85,
+      "liters": 96,
       "observed_minutes": 1285,
-      "liters_per_observed_hour": 3.97
+      "liters_per_observed_hour": 4.48
     },
     {
       "hour": 21,
@@ -1260,11 +1260,11 @@
       4,
       0,
       0,
-      21,
-      2,
-      4,
-      11,
-      15,
+      28,
+      0,
+      0,
+      0,
+      25,
       22,
       1,
       0

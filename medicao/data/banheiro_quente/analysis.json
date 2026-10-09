@@ -1,26 +1,26 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-10-08 18:56:43",
-    "hours": 932.8
+    "to": "2026-10-09 13:27:00",
+    "hours": 951.3
   },
   "coverage": {
-    "observed_minutes": 33786,
-    "gap_minutes": 22180,
+    "observed_minutes": 33851,
+    "gap_minutes": 23225,
     "absence_minutes": 12570,
-    "outage_minutes": 9609,
-    "observed_pct": 60.4,
-    "observed_pct_excl_absence": 77.9,
-    "gap_count": 56,
+    "outage_minutes": 10655,
+    "observed_pct": 59.3,
+    "observed_pct_excl_absence": 76.1,
+    "gap_count": 57,
     "absence_count": 1,
-    "outage_count": 55
+    "outage_count": 56
   },
   "volume": {
-    "total_liters": 2272,
+    "total_liters": 2342,
     "observed_liters": 1665,
-    "gap_liters": 607,
+    "gap_liters": 677,
     "absence_liters": 115,
-    "outage_liters": 492
+    "outage_liters": 562
   },
   "gaps": [
     {
@@ -35,6 +35,13 @@
       "to": "2026-09-01 20:11:09",
       "hours": 22.3,
       "liters": 23,
+      "kind": "outage"
+    },
+    {
+      "from": "2026-10-08 18:56:43",
+      "to": "2026-10-09 12:22:25",
+      "hours": 17.4,
+      "liters": 70,
       "kind": "outage"
     },
     {
@@ -70,13 +77,6 @@
       "to": "2026-09-18 08:01:27",
       "hours": 5.3,
       "liters": 21,
-      "kind": "outage"
-    },
-    {
-      "from": "2026-09-17 12:28:50",
-      "to": "2026-09-17 16:49:48",
-      "hours": 4.3,
-      "liters": 5,
       "kind": "outage"
     }
   ],
@@ -317,9 +317,15 @@
     },
     {
       "date": "2026-10-08",
-      "liters": 32,
-      "gap_liters": 0,
-      "observed_pct": 100.0
+      "liters": 52,
+      "gap_liters": 20,
+      "observed_pct": 78.9
+    },
+    {
+      "date": "2026-10-09",
+      "liters": 50,
+      "gap_liters": 50,
+      "observed_pct": 8.0
     }
   ],
   "hourly": [
@@ -398,14 +404,14 @@
     {
       "hour": 12,
       "liters": 88,
-      "observed_minutes": 1291,
-      "liters_per_observed_hour": 4.08
+      "observed_minutes": 1329,
+      "liters_per_observed_hour": 3.97
     },
     {
       "hour": 13,
       "liters": 106,
-      "observed_minutes": 1357,
-      "liters_per_observed_hour": 4.71
+      "observed_minutes": 1384,
+      "liters_per_observed_hour": 4.62
     },
     {
       "hour": 14,
@@ -1318,6 +1324,32 @@
       10,
       11,
       3,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "2026-10-09": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
       0,
       0,
       0,

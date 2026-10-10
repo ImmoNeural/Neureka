@@ -1,16 +1,16 @@
 {
-  "gerado_em": "2026-10-09T11:59:02.227874+02:00",
+  "gerado_em": "2026-10-10T11:59:07.385691+02:00",
   "criterio": {
     "salto_suspeito_litros": 20.0,
     "confirmar_salto_em": 3,
     "subida_para_conferir_litros": 150.0
   },
-  "total_descartes": 98,
+  "total_descartes": 102,
   "total_conferir": 0,
   "medidores": [
     {
       "room_key": "banheiro_quente",
-      "aceitas": 1645,
+      "aceitas": 1661,
       "descartes": [
         {
           "timestamp": "2026-08-30 22:25:10",
@@ -185,6 +185,30 @@
           "leitura": 136.104,
           "motivo": "pico contradito",
           "detalhe": "subiu 59 L sobre 136.045, mas as leituras seguintes voltaram para 136.040 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-10-09 11:39:32",
+          "leitura": 137.685,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 950 L sobre 136.735, mas as leituras seguintes voltaram para 136.805 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-10-09 14:11:16",
+          "leitura": 137.685,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 880 L sobre 136.805, mas as leituras seguintes voltaram para 136.809 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-10-09 17:02:59",
+          "leitura": 137.68,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 875 L sobre 136.805, mas as leituras seguintes voltaram para 136.805 - o relogio nao anda para tras"
+        },
+        {
+          "timestamp": "2026-10-09 17:25:04",
+          "leitura": 137.68,
+          "motivo": "pico contradito",
+          "detalhe": "subiu 875 L sobre 136.805, mas as leituras seguintes voltaram para 136.805 - o relogio nao anda para tras"
         }
       ],
       "conferir": []

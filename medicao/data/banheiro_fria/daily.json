@@ -199,11 +199,11 @@
   },
   {
     "date": "2026-10-10",
-    "session_count": 9,
+    "session_count": 10,
     "banho_count": 0,
-    "descarga_count": 7,
-    "total_liters": 103,
+    "descarga_count": 8,
+    "total_liters": 115,
     "avg_liters_per_banho": 0.0,
-    "avg_liters_per_descarga": 8.4
+    "avg_liters_per_descarga": 8.9
   }
 ]

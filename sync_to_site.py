@@ -119,6 +119,18 @@ MAX_PLAUSIBLE_JUMP_M3 = 5.0
 # two judges disagreeing.
 MAX_FLOW_RATE_LITERS_PER_MIN = 20.0
 
+# Corte de publicacao. Leitura depois deste instante NAO vai para o site, em
+# nenhum comodo - o site fica em branco a partir dai, ate alguem mover o corte.
+#
+# Posto em 11/10/2026 a pedido do Thiago. De 01 a 08/10 o site batia com a
+# planilha ponto a ponto; depois do dia 08 a serie quebrou: a quente saltou de
+# 136.815 para 137.687 (+872 L que a casa nao gastou) e a fria nao tem nada no
+# dia 09. Lacuna honesta vale mais que conta de agua errada.
+#
+# Filtra DEPOIS da limpeza, para que 01-08/10 saiam exatamente como antes. Para
+# voltar a publicar tudo: None.
+PUBLICAR_ATE: datetime | None = datetime(2026, 10, 8, 23, 59, 59)
+
 # How many accepted readings form the anchor the backwards guard compares against.
 #
 # Do NOT compare against the single last accepted reading. That is not a style
@@ -1033,6 +1045,15 @@ def process_room(room_key: str, source: Path, logger: RunLogger) -> RoomResult:
             f"room={room_key} status=SKIPPED unexpected={type(exc).__name__}: {exc}"
         )
         return RoomResult(room_key=room_key, has_data=False, error=str(exc))
+
+    if PUBLICAR_ATE is not None:
+        cortadas = sum(1 for r in clean.readings if r.timestamp > PUBLICAR_ATE)
+        if cortadas:
+            clean.readings = [r for r in clean.readings if r.timestamp <= PUBLICAR_ATE]
+            logger.log(
+                f"room={room_key} corte={PUBLICAR_ATE.strftime(TIMESTAMP_FORMAT)} "
+                f"retidas={cortadas}"
+            )
 
     if not clean.readings:
         logger.log(

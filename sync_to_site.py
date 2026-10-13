@@ -129,7 +129,11 @@ MAX_FLOW_RATE_LITERS_PER_MIN = 20.0
 #
 # Filtra DEPOIS da limpeza, para que 01-08/10 saiam exatamente como antes. Para
 # voltar a publicar tudo: None.
-PUBLICAR_ATE: datetime | None = datetime(2026, 10, 8, 23, 59, 59)
+#
+# Retirado em 13/10/2026. A quente de 08/10 19h a 13/10 21h foi revisada contra
+# leitura visual das fotos (os 137.687/137.945 eram 136.87x/136.94x lidos com o
+# 6 virando 7); a fria conferida por amostragem nas fotos.
+PUBLICAR_ATE: datetime | None = None
 
 # How many accepted readings form the anchor the backwards guard compares against.
 #

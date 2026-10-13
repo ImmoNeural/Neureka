@@ -1,28 +1,35 @@
 {
   "span": {
     "from": "2026-09-13 00:37:04",
-    "to": "2026-10-08 21:03:05",
-    "hours": 620.4
+    "to": "2026-10-13 20:42:20",
+    "hours": 740.1
   },
   "coverage": {
-    "observed_minutes": 35295,
-    "gap_minutes": 1931,
-    "absence_minutes": 0,
-    "outage_minutes": 1931,
-    "observed_pct": 94.8,
-    "observed_pct_excl_absence": 94.8,
-    "gap_count": 16,
-    "absence_count": 0,
-    "outage_count": 16
+    "observed_minutes": 40134,
+    "gap_minutes": 4271,
+    "absence_minutes": 2280,
+    "outage_minutes": 1992,
+    "observed_pct": 90.4,
+    "observed_pct_excl_absence": 95.3,
+    "gap_count": 18,
+    "absence_count": 1,
+    "outage_count": 17
   },
   "volume": {
-    "total_liters": 4273,
-    "observed_liters": 4109,
-    "gap_liters": 164,
-    "absence_liters": 0,
-    "outage_liters": 164
+    "total_liters": 5178,
+    "observed_liters": 4768,
+    "gap_liters": 410,
+    "absence_liters": 215,
+    "outage_liters": 195
   },
   "gaps": [
+    {
+      "from": "2026-10-08 21:03:05",
+      "to": "2026-10-10 11:02:47",
+      "hours": 38.0,
+      "liters": 215,
+      "kind": "absence"
+    },
     {
       "from": "2026-09-15 01:38:42",
       "to": "2026-09-15 07:24:59",
@@ -70,13 +77,6 @@
       "to": "2026-09-17 17:01:54",
       "hours": 2.0,
       "liters": 27,
-      "kind": "outage"
-    },
-    {
-      "from": "2026-09-16 10:20:33",
-      "to": "2026-09-16 11:48:13",
-      "hours": 1.5,
-      "liters": 9,
       "kind": "outage"
     }
   ],
@@ -233,155 +233,185 @@
     },
     {
       "date": "2026-10-08",
-      "liters": 165,
+      "liters": 182,
+      "gap_liters": 17,
+      "observed_pct": 81.6
+    },
+    {
+      "date": "2026-10-09",
+      "liters": 136,
+      "gap_liters": 136,
+      "observed_pct": 0.0
+    },
+    {
+      "date": "2026-10-10",
+      "liters": 238,
+      "gap_liters": 94,
+      "observed_pct": 49.8
+    },
+    {
+      "date": "2026-10-11",
+      "liters": 190,
       "gap_liters": 0,
-      "observed_pct": 93.0
+      "observed_pct": 100.0
+    },
+    {
+      "date": "2026-10-12",
+      "liters": 187,
+      "gap_liters": 0,
+      "observed_pct": 100.0
+    },
+    {
+      "date": "2026-10-13",
+      "liters": 138,
+      "gap_liters": 0,
+      "observed_pct": 100.0
     }
   ],
   "hourly": [
     {
       "hour": 0,
-      "liters": 28,
-      "observed_minutes": 1523,
-      "liters_per_observed_hour": 1.1
+      "liters": 26,
+      "observed_minutes": 1703,
+      "liters_per_observed_hour": 0.92
     },
     {
       "hour": 1,
       "liters": 0,
-      "observed_minutes": 1539,
+      "observed_minutes": 1719,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 2,
       "liters": 0,
-      "observed_minutes": 1497,
+      "observed_minutes": 1677,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 3,
-      "liters": 27,
-      "observed_minutes": 1413,
-      "liters_per_observed_hour": 1.14
+      "liters": 22,
+      "observed_minutes": 1593,
+      "liters_per_observed_hour": 0.82
     },
     {
       "hour": 4,
       "liters": 0,
-      "observed_minutes": 1444,
+      "observed_minutes": 1624,
       "liters_per_observed_hour": 0.0
     },
     {
       "hour": 5,
-      "liters": 1,
-      "observed_minutes": 1500,
-      "liters_per_observed_hour": 0.04
+      "liters": 0,
+      "observed_minutes": 1680,
+      "liters_per_observed_hour": 0.0
     },
     {
       "hour": 6,
-      "liters": 43,
-      "observed_minutes": 1486,
-      "liters_per_observed_hour": 1.75
+      "liters": 48,
+      "observed_minutes": 1666,
+      "liters_per_observed_hour": 1.73
     },
     {
       "hour": 7,
-      "liters": 244,
-      "observed_minutes": 1475,
-      "liters_per_observed_hour": 9.92
+      "liters": 270,
+      "observed_minutes": 1655,
+      "liters_per_observed_hour": 9.8
     },
     {
       "hour": 8,
-      "liters": 286,
-      "observed_minutes": 1494,
-      "liters_per_observed_hour": 11.5
+      "liters": 341,
+      "observed_minutes": 1674,
+      "liters_per_observed_hour": 12.22
     },
     {
       "hour": 9,
-      "liters": 205,
-      "observed_minutes": 1501,
-      "liters_per_observed_hour": 8.21
+      "liters": 230,
+      "observed_minutes": 1681,
+      "liters_per_observed_hour": 8.2
     },
     {
       "hour": 10,
-      "liters": 291,
-      "observed_minutes": 1521,
-      "liters_per_observed_hour": 11.5
+      "liters": 358,
+      "observed_minutes": 1701,
+      "liters_per_observed_hour": 12.63
     },
     {
       "hour": 11,
-      "liters": 383,
-      "observed_minutes": 1512,
-      "liters_per_observed_hour": 15.19
+      "liters": 459,
+      "observed_minutes": 1692,
+      "liters_per_observed_hour": 16.29
     },
     {
       "hour": 12,
-      "liters": 314,
-      "observed_minutes": 1517,
-      "liters_per_observed_hour": 12.43
+      "liters": 415,
+      "observed_minutes": 1754,
+      "liters_per_observed_hour": 14.21
     },
     {
       "hour": 13,
-      "liters": 252,
-      "observed_minutes": 1500,
-      "liters_per_observed_hour": 10.07
+      "liters": 286,
+      "observed_minutes": 1740,
+      "liters_per_observed_hour": 9.85
     },
     {
       "hour": 14,
-      "liters": 166,
-      "observed_minutes": 1500,
-      "liters_per_observed_hour": 6.66
+      "liters": 205,
+      "observed_minutes": 1740,
+      "liters_per_observed_hour": 7.07
     },
     {
       "hour": 15,
-      "liters": 295,
-      "observed_minutes": 1425,
-      "liters_per_observed_hour": 12.43
+      "liters": 338,
+      "observed_minutes": 1665,
+      "liters_per_observed_hour": 12.19
     },
     {
       "hour": 16,
-      "liters": 167,
-      "observed_minutes": 1398,
-      "liters_per_observed_hour": 7.17
+      "liters": 208,
+      "observed_minutes": 1638,
+      "liters_per_observed_hour": 7.61
     },
     {
       "hour": 17,
-      "liters": 176,
-      "observed_minutes": 1443,
-      "liters_per_observed_hour": 7.31
+      "liters": 206,
+      "observed_minutes": 1683,
+      "liters_per_observed_hour": 7.36
     },
     {
       "hour": 18,
-      "liters": 180,
-      "observed_minutes": 1548,
-      "liters_per_observed_hour": 6.98
+      "liters": 205,
+      "observed_minutes": 1788,
+      "liters_per_observed_hour": 6.89
     },
     {
       "hour": 19,
-      "liters": 394,
-      "observed_minutes": 1461,
-      "liters_per_observed_hour": 16.19
+      "liters": 418,
+      "observed_minutes": 1701,
+      "liters_per_observed_hour": 14.75
     },
     {
       "hour": 20,
-      "liters": 252,
-      "observed_minutes": 1360,
-      "liters_per_observed_hour": 11.11
+      "liters": 272,
+      "observed_minutes": 1583,
+      "liters_per_observed_hour": 10.31
     },
     {
       "hour": 21,
-      "liters": 334,
-      "observed_minutes": 1323,
-      "liters_per_observed_hour": 15.16
+      "liters": 346,
+      "observed_minutes": 1503,
+      "liters_per_observed_hour": 13.81
     },
     {
       "hour": 22,
-      "liters": 107,
-      "observed_minutes": 1415,
-      "liters_per_observed_hour": 4.54
+      "liters": 135,
+      "observed_minutes": 1595,
+      "liters_per_observed_hour": 5.07
     },
     {
       "hour": 23,
-      "liters": 0,
-      "observed_minutes": 1500,
-      "liters_per_observed_hour": 0.0
+      "liters": 1,
+      "observed_minutes": 1680,
+      "liters_per_observed_hour": 0.05
     }
   ],
   "hourly_by_day": {
@@ -1057,6 +1087,110 @@
       11,
       2,
       -3,
+      0,
+      0,
+      0
+    ],
+    "2026-10-10": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      24,
+      10,
+      0,
+      18,
+      15,
+      8,
+      26,
+      24,
+      -2,
+      12,
+      3,
+      8
+    ],
+    "2026-10-11": [
+      0,
+      10,
+      0,
+      -5,
+      4,
+      -4,
+      0,
+      0,
+      26,
+      16,
+      31,
+      33,
+      41,
+      10,
+      16,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      12,
+      0
+    ],
+    "2026-10-12": [
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      10,
+      21,
+      9,
+      35,
+      34,
+      21,
+      17,
+      7,
+      1,
+      0,
+      0,
+      0,
+      0,
+      22,
+      0,
+      13,
+      -3
+    ],
+    "2026-10-13": [
+      -2,
+      3,
+      0,
+      0,
+      0,
+      0,
+      4,
+      16,
+      7,
+      0,
+      0,
+      10,
+      15,
+      -3,
+      16,
+      24,
+      26,
+      23,
+      -1,
+      0,
+      0,
       0,
       0,
       0

@@ -196,5 +196,41 @@
     "total_liters": 53,
     "avg_liters_per_banho": 0.0,
     "avg_liters_per_descarga": 5.4
+  },
+  {
+    "date": "2026-10-10",
+    "session_count": 14,
+    "banho_count": 0,
+    "descarga_count": 12,
+    "total_liters": 131,
+    "avg_liters_per_banho": 0.0,
+    "avg_liters_per_descarga": 7.2
+  },
+  {
+    "date": "2026-10-11",
+    "session_count": 12,
+    "banho_count": 0,
+    "descarga_count": 7,
+    "total_liters": 170,
+    "avg_liters_per_banho": 0.0,
+    "avg_liters_per_descarga": 5.9
+  },
+  {
+    "date": "2026-10-12",
+    "session_count": 9,
+    "banho_count": 0,
+    "descarga_count": 6,
+    "total_liters": 102,
+    "avg_liters_per_banho": 0.0,
+    "avg_liters_per_descarga": 5.8
+  },
+  {
+    "date": "2026-10-13",
+    "session_count": 6,
+    "banho_count": 0,
+    "descarga_count": 4,
+    "total_liters": 57,
+    "avg_liters_per_banho": 0.0,
+    "avg_liters_per_descarga": 6.8
   }
 ]

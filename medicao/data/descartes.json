@@ -1,5 +1,5 @@
 {
-  "gerado_em": "2026-10-12T11:59:02.257934+02:00",
+  "gerado_em": "2026-10-13T11:59:02.285423+02:00",
   "criterio": {
     "salto_suspeito_litros": 20.0,
     "confirmar_salto_em": 3,
@@ -230,7 +230,7 @@
     },
     {
       "room_key": "banheiro_fria",
-      "aceitas": 2038,
+      "aceitas": 2123,
       "descartes": [
         {
           "timestamp": "2026-09-13 16:37:03",

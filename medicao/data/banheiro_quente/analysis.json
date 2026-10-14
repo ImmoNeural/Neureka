@@ -421,15 +421,15 @@
     },
     {
       "hour": 10,
-      "liters": 131,
+      "liters": 129,
       "observed_minutes": 1343,
-      "liters_per_observed_hour": 5.84
+      "liters_per_observed_hour": 5.77
     },
     {
       "hour": 11,
-      "liters": 110,
+      "liters": 111,
       "observed_minutes": 1381,
-      "liters_per_observed_hour": 4.77
+      "liters_per_observed_hour": 4.84
     },
     {
       "hour": 12,
@@ -441,7 +441,7 @@
       "hour": 13,
       "liters": 106,
       "observed_minutes": 1477,
-      "liters_per_observed_hour": 4.32
+      "liters_per_observed_hour": 4.33
     },
     {
       "hour": 14,
@@ -1504,8 +1504,8 @@
       0,
       0,
       10,
-      22,
-      -2,
+      20,
+      0,
       0,
       0,
       1,

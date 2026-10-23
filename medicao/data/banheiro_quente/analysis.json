@@ -1,26 +1,26 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-10-23 10:38:20",
-    "hours": 1284.5
+    "to": "2026-10-23 11:43:37",
+    "hours": 1285.6
   },
   "coverage": {
-    "observed_minutes": 47813,
-    "gap_minutes": 29255,
+    "observed_minutes": 47746,
+    "gap_minutes": 29387,
     "absence_minutes": 12570,
-    "outage_minutes": 16685,
-    "observed_pct": 62.0,
-    "observed_pct_excl_absence": 74.1,
-    "gap_count": 79,
+    "outage_minutes": 16817,
+    "observed_pct": 61.9,
+    "observed_pct_excl_absence": 74.0,
+    "gap_count": 80,
     "absence_count": 1,
-    "outage_count": 78
+    "outage_count": 79
   },
   "volume": {
-    "total_liters": 3333,
-    "observed_liters": 2296,
-    "gap_liters": 1037,
+    "total_liters": 3327,
+    "observed_liters": 2295,
+    "gap_liters": 1032,
     "absence_liters": 115,
-    "outage_liters": 922
+    "outage_liters": 917
   },
   "gaps": [
     {
@@ -407,9 +407,9 @@
     },
     {
       "date": "2026-10-23",
-      "liters": 7,
+      "liters": 1,
       "gap_liters": 0,
-      "observed_pct": 100.0
+      "observed_pct": 81.2
     }
   ],
   "hourly": [
@@ -463,27 +463,27 @@
     },
     {
       "hour": 8,
-      "liters": 258,
-      "observed_minutes": 1836,
-      "liters_per_observed_hour": 8.42
+      "liters": 257,
+      "observed_minutes": 1824,
+      "liters_per_observed_hour": 8.46
     },
     {
       "hour": 9,
       "liters": 107,
-      "observed_minutes": 1963,
-      "liters_per_observed_hour": 3.28
+      "observed_minutes": 1903,
+      "liters_per_observed_hour": 3.37
     },
     {
       "hour": 10,
       "liters": 135,
-      "observed_minutes": 1802,
-      "liters_per_observed_hour": 4.51
+      "observed_minutes": 1763,
+      "liters_per_observed_hour": 4.61
     },
     {
       "hour": 11,
       "liters": 132,
-      "observed_minutes": 1801,
-      "liters_per_observed_hour": 4.38
+      "observed_minutes": 1845,
+      "liters_per_observed_hour": 4.28
     },
     {
       "hour": 12,
@@ -1790,7 +1790,7 @@
       0,
       0,
       0,
-      7,
+      6,
       0,
       0,
       0,

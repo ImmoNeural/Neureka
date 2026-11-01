@@ -1,23 +1,23 @@
 {
   "span": {
     "from": "2026-08-30 22:10:26",
-    "to": "2026-10-31 23:15:37",
-    "hours": 1489.1
+    "to": "2026-11-01 01:05:06",
+    "hours": 1490.9
   },
   "coverage": {
-    "observed_minutes": 58547,
+    "observed_minutes": 58657,
     "gap_minutes": 30798,
     "absence_minutes": 12570,
     "outage_minutes": 18228,
-    "observed_pct": 65.5,
+    "observed_pct": 65.6,
     "observed_pct_excl_absence": 76.3,
     "gap_count": 91,
     "absence_count": 1,
     "outage_count": 90
   },
   "volume": {
-    "total_liters": 3836,
-    "observed_liters": 2723,
+    "total_liters": 3858,
+    "observed_liters": 2745,
     "gap_liters": 1113,
     "absence_liters": 115,
     "outage_liters": 998
@@ -455,22 +455,28 @@
     },
     {
       "date": "2026-10-31",
-      "liters": 34,
+      "liters": 56,
       "gap_liters": 5,
-      "observed_pct": 97.5
+      "observed_pct": 97.6
+    },
+    {
+      "date": "2026-11-01",
+      "liters": 0,
+      "gap_liters": 0,
+      "observed_pct": 100.0
     }
   ],
   "hourly": [
     {
       "hour": 0,
       "liters": 37,
-      "observed_minutes": 2717,
-      "liters_per_observed_hour": 0.81
+      "observed_minutes": 2777,
+      "liters_per_observed_hour": 0.79
     },
     {
       "hour": 1,
       "liters": 0,
-      "observed_minutes": 2635,
+      "observed_minutes": 2640,
       "liters_per_observed_hour": 0.0
     },
     {
@@ -601,9 +607,9 @@
     },
     {
       "hour": 23,
-      "liters": 72,
-      "observed_minutes": 2652,
-      "liters_per_observed_hour": 1.62
+      "liters": 94,
+      "observed_minutes": 2697,
+      "liters_per_observed_hour": 2.08
     }
   ],
   "hourly_by_day": {
@@ -2061,7 +2067,33 @@
       -1,
       0,
       1,
-      4
+      26
+    ],
+    "2026-11-01": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
     ]
   }
 }

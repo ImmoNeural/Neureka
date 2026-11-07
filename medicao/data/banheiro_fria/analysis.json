@@ -1,11 +1,11 @@
 {
   "span": {
     "from": "2026-09-13 00:37:04",
-    "to": "2026-11-07 18:12:26",
-    "hours": 1337.6
+    "to": "2026-11-07 18:34:01",
+    "hours": 1337.9
   },
   "coverage": {
-    "observed_minutes": 74382,
+    "observed_minutes": 74404,
     "gap_minutes": 5873,
     "absence_minutes": 2280,
     "outage_minutes": 3593,
@@ -530,8 +530,8 @@
     {
       "hour": 18,
       "liters": 425,
-      "observed_minutes": 3178,
-      "liters_per_observed_hour": 8.03
+      "observed_minutes": 3199,
+      "liters_per_observed_hour": 7.98
     },
     {
       "hour": 19,

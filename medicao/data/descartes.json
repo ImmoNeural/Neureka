@@ -1,5 +1,5 @@
 {
-  "gerado_em": "2026-11-10T10:59:02.103222+01:00",
+  "gerado_em": "2026-11-11T10:59:02.595760+01:00",
   "criterio": {
     "salto_suspeito_litros": 20.0,
     "confirmar_salto_em": 3,
@@ -10,7 +10,7 @@
   "medidores": [
     {
       "room_key": "banheiro_quente",
-      "aceitas": 3412,
+      "aceitas": 3463,
       "descartes": [
         {
           "timestamp": "2026-08-30 22:25:10",
@@ -257,7 +257,7 @@
     },
     {
       "room_key": "banheiro_fria",
-      "aceitas": 4036,
+      "aceitas": 4094,
       "descartes": [
         {
           "timestamp": "2026-09-13 16:37:03",

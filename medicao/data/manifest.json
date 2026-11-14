@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T03:02:42.789719+01:00",
+  "generated_at": "2026-11-14T03:22:49.880311+01:00",
   "rooms": [
     {
       "room_key": "banheiro_quente",
@@ -7,8 +7,8 @@
       "temperature": "quente",
       "has_data": true,
       "last_reading": 139.325,
-      "last_reading_at": "2026-11-14 02:48:09",
-      "last_sync": "2026-11-14T03:02:42.789719+01:00",
+      "last_reading_at": "2026-11-14 03:10:20",
+      "last_sync": "2026-11-14T03:22:49.880311+01:00",
       "available_months": [
         "2026-08",
         "2026-09",
@@ -22,9 +22,9 @@
       "label": "Banheiro - Fria",
       "temperature": "fria",
       "has_data": true,
-      "last_reading": 196.435,
-      "last_reading_at": "2026-11-14 02:58:01",
-      "last_sync": "2026-11-14T03:02:42.789719+01:00",
+      "last_reading": 196.445,
+      "last_reading_at": "2026-11-14 03:19:37",
+      "last_sync": "2026-11-14T03:22:49.880311+01:00",
       "available_months": [
         "2026-09",
         "2026-10",
@@ -39,7 +39,7 @@
       "has_data": true,
       "last_reading": 25.095,
       "last_reading_at": "2026-09-16 16:13:04",
-      "last_sync": "2026-11-14T03:02:42.789719+01:00",
+      "last_sync": "2026-11-14T03:22:49.880311+01:00",
       "available_months": [
         "2026-09",
         "analysis"
@@ -52,7 +52,7 @@
       "has_data": false,
       "last_reading": null,
       "last_reading_at": null,
-      "last_sync": "2026-11-14T03:02:42.789719+01:00",
+      "last_sync": "2026-11-14T03:22:49.880311+01:00",
       "available_months": []
     },
     {
@@ -62,7 +62,7 @@
       "has_data": false,
       "last_reading": null,
       "last_reading_at": null,
-      "last_sync": "2026-11-14T03:02:42.789719+01:00",
+      "last_sync": "2026-11-14T03:22:49.880311+01:00",
       "available_months": []
     }
   ]

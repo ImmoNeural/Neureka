@@ -1,11 +1,11 @@
 {
   "span": {
     "from": "2026-09-13 00:37:04",
-    "to": "2026-11-21 10:47:57",
-    "hours": 1666.2
+    "to": "2026-11-21 11:10:01",
+    "hours": 1666.5
   },
   "coverage": {
-    "observed_minutes": 93658,
+    "observed_minutes": 93680,
     "gap_minutes": 6313,
     "absence_minutes": 2280,
     "outage_minutes": 4033,
@@ -566,14 +566,14 @@
     {
       "hour": 10,
       "liters": 724,
-      "observed_minutes": 3968,
-      "liters_per_observed_hour": 10.94
+      "observed_minutes": 3981,
+      "liters_per_observed_hour": 10.91
     },
     {
       "hour": 11,
       "liters": 820,
-      "observed_minutes": 3912,
-      "liters_per_observed_hour": 12.58
+      "observed_minutes": 3922,
+      "liters_per_observed_hour": 12.55
     },
     {
       "hour": 12,
